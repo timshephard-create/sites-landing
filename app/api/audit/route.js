@@ -188,26 +188,28 @@ Rules:
 
 async function screenshotHtml(html) {
   try {
-    const encoded = Buffer.from(html, 'utf-8').toString('base64');
-    const previewUrl = `${process.env.NEXT_PUBLIC_BASE_URL}/api/mockup-preview?html=${encoded}`;
-    const params = new URLSearchParams({
-      access_key: process.env.SCREENSHOT_ONE_ACCESS_KEY,
-      url: previewUrl,
-      viewport_width: '1280',
-      viewport_height: '900',
-      device_scale_factor: '1',
-      format: 'jpg',
-      image_quality: '85',
-      full_page: 'false',
-      delay: '4'
+    const res = await fetch('https://api.screenshotone.com/take', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        access_key: process.env.SCREENSHOT_ONE_ACCESS_KEY,
+        html: html,
+        viewport_width: 1280,
+        viewport_height: 900,
+        device_scale_factor: 1,
+        format: 'jpg',
+        image_quality: 85,
+        full_page: false,
+        delay: 2
+      })
     });
-    const screenshotUrl = `https://api.screenshotone.com/take?${params.toString()}`;
-    const res = await fetch(screenshotUrl);
     if (!res.ok) {
       console.error('ScreenshotOne error:', await res.text());
       return null;
     }
-    return screenshotUrl;
+    const buffer = await res.arrayBuffer();
+    const base64 = Buffer.from(buffer).toString('base64');
+    return `data:image/jpeg;base64,${base64}`;
   } catch(e) {
     console.error('Screenshot error:', e);
     return null;
