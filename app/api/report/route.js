@@ -195,15 +195,8 @@ Requirements:
 
 async function screenshotHtml(html) {
   try {
-    // Store HTML and get a temp ID
-    const id = Date.now().toString();
-    const { mockupStore } = await import('../mockup-preview/route.js');
-    mockupStore.set(id, html);
-
-    // Clean up after 5 minutes
-    setTimeout(() => mockupStore.delete(id), 5 * 60 * 1000);
-
-    const previewUrl = `${process.env.NEXT_PUBLIC_BASE_URL}/api/mockup-preview?id=${id}`;
+    const encoded = Buffer.from(html, 'utf-8').toString('base64');
+    const previewUrl = `${process.env.NEXT_PUBLIC_BASE_URL}/api/mockup-preview?html=${encoded}`;
 
     const params = new URLSearchParams({
       access_key: process.env.SCREENSHOT_ONE_ACCESS_KEY,
