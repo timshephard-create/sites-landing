@@ -10,13 +10,9 @@
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.80.0",
-    "@sparticuz/chromium": "^143.0.4",
     "@stripe/stripe-js": "^8.11.0",
     "axios": "^1.13.6",
     "next": "16.2.0",
-    "nodemailer": "^8.0.3",
-    "pdfkit": "^0.18.0",
-    "puppeteer-core": "^24.40.0",
     "react": "19.2.4",
     "react-dom": "19.2.4",
     "stripe": "^20.4.1"
