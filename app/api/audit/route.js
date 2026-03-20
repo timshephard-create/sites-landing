@@ -153,7 +153,8 @@ Rules:
         const mockupData = await mockupRes.json();
         const mockupHtml = mockupData.content?.[0]?.text || '';
         if (mockupHtml) {
-          teaserImageUrl = await screenshotHtml(mockupHtml);
+          await new Promise(r => setTimeout(r, 3000));
+        teaserImageUrl = await screenshotHtml(mockupHtml);
         }
       } catch(e) {
         console.error('Teaser mockup error:', e);
@@ -201,7 +202,7 @@ async function screenshotHtml(html) {
       format: 'jpg',
       image_quality: '85',
       full_page: 'false',
-      delay: '2'
+      delay: '4'
     });
     const screenshotUrl = `https://api.screenshotone.com/take?${params.toString()}`;
     const res = await fetch(screenshotUrl);
