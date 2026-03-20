@@ -195,11 +195,9 @@ Requirements:
 
 async function screenshotHtml(html) {
   try {
-    const id = Date.now().toString();
-    const { mockupStore } = await import('../mockup-preview/route.js');
-    mockupStore.set(id, html);
-    setTimeout(() => mockupStore.delete(id), 5 * 60 * 1000);
-    const previewUrl = `${process.env.NEXT_PUBLIC_BASE_URL}/api/mockup-preview?id=${id}`;
+    const { deflateSync } = await import('zlib');
+    const encoded = deflateSync(Buffer.from(html)).toString('base64url');
+    const previewUrl = `${process.env.NEXT_PUBLIC_BASE_URL}/api/mockup-preview?data=${encoded}`;
 
     const params = new URLSearchParams({
       access_key: process.env.SCREENSHOT_ONE_ACCESS_KEY,
@@ -221,8 +219,7 @@ async function screenshotHtml(html) {
       return null;
     }
 
-    const buffer = await res.arrayBuffer();
-    const base64 = Buffer.from(buffer).toString('base64');
+    await res.arrayBuffer();
     return screenshotUrl;
 
   } catch(e) {
