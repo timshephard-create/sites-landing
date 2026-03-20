@@ -74,7 +74,38 @@ export async function POST(request) {
     .map(([page, content]) => `=== ${page.toUpperCase()} ===\n${content}`)
     .join('\n\n');
 
-  const systemPrompt = "You are a website advisor helping local business owners understand how their website is performing. Your tone is that of a knowledgeable friend — honest, clear, never condescending, never salesy. You have crawled multiple pages of their website and you are giving them a real, specific assessment based on what you actually found.\n\nReturn a JSON object with this exact structure:\n{\n  \"score\": number between 0-100,\n  \"grade\": one of F, D, C, B, A,\n  \"summary\": one honest sentence about the overall site,\n  \"issues\": array of 4-5 objects, each with { \"title\": string, \"description\": string, \"impact\": one of high/medium/low }\n}\n\nScoring guide:\n- 80-100: Site is genuinely good, only minor improvements needed\n- 60-79: Solid foundation but missing key conversion elements\n- 40-59: Several real problems costing them customers\n- Below 40: Significant issues that need immediate attention\n\nFor each issue:\n- Be specific to what you actually saw on their pages\n- high impact means it is likely costing them customers or revenue right now\n- medium impact means it is reducing their effectiveness\n- low impact means it would improve the site but is not urgent\n- If the site handles something well, skip it and focus on real gaps\n- Describe the cost of inaction, not just the problem\n\nRules:\n- Base everything on the actual content you were given\n- If pricing was found on a subpage, note that it requires extra clicks to find\n- If contact info was found, note whether it is prominent or buried\n- Never fabricate issues that are not supported by the content\n- Never use: stunning, seamless, leverage, optimize, solutions\n- Return only valid JSON, no markdown, no preamble";
+  const systemPrompt = `You are a website advisor helping local business owners understand how their website is performing. Your tone is that of a knowledgeable friend — honest, clear, never condescending, never salesy. You have crawled multiple pages of their website and you are giving them a real, specific assessment based on what you actually found.
+
+Return a JSON object with this exact structure:
+{
+  "score": number between 0-100,
+  "grade": one of F, D, C, B, A,
+  "industry": one or two word description of the business type e.g. medspa, plumber, restaurant, law firm,
+  "summary": one honest sentence about the overall site,
+  "issues": array of 4-5 objects, each with { "title": string, "description": string, "impact": one of high/medium/low }
+}
+
+Scoring guide:
+- 80-100: Site is genuinely good, only minor improvements needed
+- 60-79: Solid foundation but missing key conversion elements
+- 40-59: Several real problems costing them customers
+- Below 40: Significant issues that need immediate attention
+
+For each issue:
+- Be specific to what you actually saw on their pages
+- high impact means it is likely costing them customers or revenue right now
+- medium impact means it is reducing their effectiveness
+- low impact means it would improve the site but is not urgent
+- If the site handles something well, skip it and focus on real gaps
+- Describe the cost of inaction, not just the problem
+
+Rules:
+- Base everything on the actual content you were given
+- If pricing was found on a subpage, note that it requires extra clicks to find
+- If contact info was found, note whether it is prominent or buried
+- Never fabricate issues that are not supported by the content
+- Never use: stunning, seamless, leverage, optimize, solutions
+- Return only valid JSON, no markdown, no preamble`;
 
   try {
     const res = await fetch('https://api.anthropic.com/v1/messages', {
@@ -100,8 +131,36 @@ export async function POST(request) {
     const clean = text.replace(/```json|```/g, '').trim();
     const audit = JSON.parse(clean);
 
+    let teaserImageUrl = null;
+    if (audit.industry) {
+      try {
+        const mockupRes = await fetch('https://api.anthropic.com/v1/messages', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-api-key': process.env.ANTHROPIC_API_KEY,
+            'anthropic-version': '2023-06-01'
+          },
+          body: JSON.stringify({
+            model: 'claude-sonnet-4-20250514',
+            max_tokens: 4000,
+            messages: [{ 
+              role: 'user', 
+              content: `Generate a single clean, modern, high-converting homepage design for a ${audit.industry} business as a complete self-contained HTML file. Requirements: inline styles only, no external CSS, use Google Fonts via a single link tag, fixed navigation bar with logo and CTA button, hero section with compelling headline and CTA, services section with 3 cards, trust/social proof section, final CTA section. Use a cohesive professional color palette. Page should look like a real $5,000 website. Return ONLY the complete HTML starting with <!DOCTYPE html>, no explanation, no markdown backticks.`
+            }]
+          })
+        });
+        const mockupData = await mockupRes.json();
+        const mockupHtml = mockupData.content?.[0]?.text || '';
+        if (mockupHtml) {
+          teaserImageUrl = await screenshotHtml(mockupHtml);
+        }
+      } catch(e) {
+        console.error('Teaser mockup error:', e);
+      }
+    }
+
     if (email) {
-      // Save contact to Brevo list
       await fetch('https://api.brevo.com/v3/contacts', {
         method: 'POST',
         headers: {
@@ -116,8 +175,7 @@ export async function POST(request) {
         })
       }).catch(() => {});
 
-      // Send free audit summary email
-      await sendAuditEmail(email, url, audit).catch(() => {});
+      await sendAuditEmail(email, url, audit, teaserImageUrl).catch(() => {});
     }
 
     return Response.json({ audit, pagesCrawled: Object.keys(siteData) });
@@ -127,7 +185,38 @@ export async function POST(request) {
   }
 }
 
-async function sendAuditEmail(email, url, audit) {
+async function screenshotHtml(html) {
+  try {
+    const id = Date.now().toString();
+    const { mockupStore } = await import('../mockup-preview/route.js');
+    mockupStore.set(id, html);
+    setTimeout(() => mockupStore.delete(id), 5 * 60 * 1000);
+    const previewUrl = `${process.env.NEXT_PUBLIC_BASE_URL}/api/mockup-preview?id=${id}`;
+    const params = new URLSearchParams({
+      access_key: process.env.SCREENSHOT_ONE_ACCESS_KEY,
+      url: previewUrl,
+      viewport_width: '1280',
+      viewport_height: '900',
+      device_scale_factor: '1',
+      format: 'jpg',
+      image_quality: '85',
+      full_page: 'false',
+      delay: '2'
+    });
+    const screenshotUrl = `https://api.screenshotone.com/take?${params.toString()}`;
+    const res = await fetch(screenshotUrl);
+    if (!res.ok) {
+      console.error('ScreenshotOne error:', await res.text());
+      return null;
+    }
+    return screenshotUrl;
+  } catch(e) {
+    console.error('Screenshot error:', e);
+    return null;
+  }
+}
+
+async function sendAuditEmail(email, url, audit, teaserImageUrl) {
   const scoreColor = audit.score >= 80 ? '#3B6D11' : audit.score >= 60 ? '#854F0B' : '#993C1D';
   const impactColor = (impact) => {
     if (impact === 'high') return { bg: '#FAECE7', color: '#993C1D' };
@@ -165,6 +254,19 @@ async function sendAuditEmail(email, url, audit) {
       </div>
 
       <h2 style="font-family:Georgia,serif; font-size:1.1rem; margin:0 0 16px;">What we found</h2>
+
+      ${teaserImageUrl ? `
+      <div style="margin:32px 0; text-align:center;">
+        <p style="font-size:0.72rem; letter-spacing:0.12em; text-transform:uppercase; color:#C8522A; margin-bottom:8px;">What a high-converting ${audit.industry} site looks like</p>
+        <h2 style="font-family:Georgia,serif; font-size:1.1rem; margin:0 0 8px; color:#1A1714;">Your site could look like this.</h2>
+        <p style="font-size:0.85rem; color:#4A4540; margin-bottom:16px;">Built around your business, your services, and your customers.</p>
+        <div style="border:3px solid #C8522A; border-radius:4px; overflow:hidden;">
+          <img src="${teaserImageUrl}" alt="Example ${audit.industry} website" style="width:100%; display:block;" />
+        </div>
+        <p style="font-size:0.78rem; color:#9A9490; text-align:center; margin-top:8px; font-style:italic;">This is a high-converting example for your industry. Your paid report includes a custom version built around your actual business.</p>
+      </div>
+      ` : ''}
+
       ${issuesHTML}
 
       <div style="background:#1A1714; border-radius:4px; padding:28px; margin-top:32px; text-align:center;">
