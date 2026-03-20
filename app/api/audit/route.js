@@ -153,8 +153,7 @@ Rules:
         const mockupData = await mockupRes.json();
         const mockupHtml = mockupData.content?.[0]?.text || '';
         if (mockupHtml) {
-          await new Promise(r => setTimeout(r, 3000));
-        teaserImageUrl = await screenshotHtml(mockupHtml);
+          teaserImageUrl = await screenshotHtml(mockupHtml);
         }
       } catch(e) {
         console.error('Teaser mockup error:', e);
@@ -210,6 +209,8 @@ async function screenshotHtml(html) {
       console.error('ScreenshotOne error:', await res.text());
       return null;
     }
+    const buffer = await res.arrayBuffer();
+    const base64 = Buffer.from(buffer).toString('base64');
     return screenshotUrl;
   } catch(e) {
     console.error('Screenshot error:', e);
