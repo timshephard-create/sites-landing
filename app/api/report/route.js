@@ -252,71 +252,155 @@ async function sendReportEmail(email, url, report, mockupImageData) {
 }
 
 function buildEmailHTML(url, report, mockupImageData) {
-  const sectionHTML = report.sections.map(section => `
-    <div style="margin-bottom:32px; border:1px solid #e8e4df; border-radius:4px; padding:24px; background:#fff;">
-      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
-        <h3 style="margin:0; font-family:Georgia,serif; font-size:1.1rem; color:#1A1714;">${section.title}</h3>
-        <span style="font-size:1.4rem; font-weight:700; color:${section.score >= 80 ? '#3B6D11' : section.score >= 60 ? '#854F0B' : '#993C1D'};">${section.score}/100</span>
-      </div>
-      <h4 style="font-size:0.75rem; text-transform:uppercase; letter-spacing:0.08em; color:#9A9490; margin:0 0 8px;">What We Found</h4>
-      <ul style="margin:0 0 16px; padding-left:20px;">
-        ${section.findings.map(f => `<li style="margin-bottom:6px; font-size:0.9rem; color:#4A4540; line-height:1.6;">${f}</li>`).join('')}
-      </ul>
-      <h4 style="font-size:0.75rem; text-transform:uppercase; letter-spacing:0.08em; color:#9A9490; margin:0 0 8px;">Recommendations</h4>
-      ${section.recommendations.map(r => `
-        <div style="background:${r.priority === 'high' ? '#FAECE7' : r.priority === 'medium' ? '#FAEEDA' : '#EAF3DE'}; border-radius:2px; padding:12px; margin-bottom:8px;">
-          <div style="margin-bottom:4px;">
-            <span style="font-size:0.7rem; text-transform:uppercase; letter-spacing:0.08em; color:${r.priority === 'high' ? '#993C1D' : r.priority === 'medium' ? '#854F0B' : '#3B6D11'}; font-weight:600;">${r.priority} priority</span>
-          </div>
-          <strong style="font-size:0.88rem; color:#1A1714;">${r.action}</strong>
-          <p style="margin:4px 0 0; font-size:0.82rem; color:#4A4540; line-height:1.5;">${r.impact}</p>
-        </div>
-      `).join('')}
-    </div>
-  `).join('');
+  const priorityColors = {
+    high:   { bg: '#FAECE7', color: '#993C1D' },
+    medium: { bg: '#FAEEDA', color: '#854F0B' },
+    low:    { bg: '#EAF3DE', color: '#3B6D11' },
+  };
+
+  const sectionsHTML = report.sections.map(section => {
+    const sc = section.score >= 80 ? '#3B6D11' : section.score >= 60 ? '#854F0B' : '#993C1D';
+
+    const findingsHTML = section.findings.map(f =>
+      `<tr><td style="padding:4px 0;font-family:Georgia,serif;font-size:14px;color:#4A4540;line-height:1.6;">&#8226;&nbsp;&nbsp;${f}</td></tr>`
+    ).join('');
+
+    const recsHTML = section.recommendations.map(r => {
+      const pc = priorityColors[r.priority] || priorityColors.low;
+      return `
+        <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:8px;border-radius:2px;background:${pc.bg};">
+          <tr>
+            <td style="padding:12px 16px;">
+              <p style="margin:0 0 4px;font-family:Arial,sans-serif;font-size:11px;text-transform:uppercase;letter-spacing:1px;color:${pc.color};font-weight:bold;">${r.priority} priority</p>
+              <p style="margin:0 0 4px;font-family:Georgia,serif;font-size:14px;font-weight:bold;color:#1A1714;">${r.action}</p>
+              <p style="margin:0;font-family:Georgia,serif;font-size:13px;color:#4A4540;line-height:1.5;">${r.impact}</p>
+            </td>
+          </tr>
+        </table>`;
+    }).join('');
+
+    return `
+      <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:24px;border:1px solid #e8e4df;border-radius:4px;background:#ffffff;">
+        <tr>
+          <td style="padding:24px;">
+            <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:16px;">
+              <tr>
+                <td>
+                  <h3 style="margin:0;font-family:Georgia,serif;font-size:18px;color:#1A1714;">${section.title}</h3>
+                </td>
+                <td width="80" align="right" valign="middle" style="white-space:nowrap;">
+                  <span style="font-family:Georgia,serif;font-size:20px;font-weight:bold;color:${sc};">${section.score}/100</span>
+                </td>
+              </tr>
+            </table>
+            <p style="margin:0 0 8px;font-family:Arial,sans-serif;font-size:11px;text-transform:uppercase;letter-spacing:1px;color:#9A9490;">What We Found</p>
+            <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:16px;">
+              ${findingsHTML}
+            </table>
+            <p style="margin:0 0 8px;font-family:Arial,sans-serif;font-size:11px;text-transform:uppercase;letter-spacing:1px;color:#9A9490;">Recommendations</p>
+            ${recsHTML}
+          </td>
+        </tr>
+      </table>`;
+  }).join('');
 
   const mockupSection = mockupImageData ? `
-    <div style="margin-bottom:40px;">
-      <div style="text-align:center; margin-bottom:20px;">
-        <p style="font-size:0.75rem; letter-spacing:0.12em; text-transform:uppercase; color:#C8522A; margin-bottom:8px;">Your Homepage, Reimagined</p>
-        <h2 style="font-family:Georgia,serif; font-size:1.4rem; color:#1A1714; margin:0 0 8px;">Here's what a high-converting version of your homepage could look like.</h2>
-        <p style="font-size:0.88rem; color:#9A9490; margin:0;">Built around your business, your services, and your customers.</p>
-      </div>
-      <div style="border:3px solid #C8522A; border-radius:4px; overflow:hidden; box-shadow:0 8px 32px rgba(0,0,0,0.12);">
-        <img src="${mockupImageData}" alt="Your reimagined homepage" style="width:100%; display:block;" />
-      </div>
-      <p style="font-size:0.78rem; color:#9A9490; text-align:center; margin-top:12px; font-style:italic;">This is a design concept based on best practices for your industry. Your actual rebuild would be fully customized.</p>
-    </div>
-  ` : '';
+    <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:40px;">
+      <tr>
+        <td style="text-align:center;padding-bottom:20px;">
+          <p style="margin:0 0 8px;font-family:Arial,sans-serif;font-size:11px;letter-spacing:2px;text-transform:uppercase;color:#C8522A;">Your Homepage, Reimagined</p>
+          <h2 style="margin:0 0 8px;font-family:Georgia,serif;font-size:22px;color:#1A1714;">Here&#8217;s what a high-converting version of your homepage could look like.</h2>
+          <p style="margin:0;font-family:Georgia,serif;font-size:14px;color:#9A9490;">Built around your business, your services, and your customers.</p>
+        </td>
+      </tr>
+      <tr>
+        <td style="border:3px solid #C8522A;border-radius:4px;line-height:0;font-size:0;">
+          <img src="${mockupImageData}" alt="Your reimagined homepage" width="600" style="width:100%;max-width:600px;height:auto;display:block;border:0;" />
+        </td>
+      </tr>
+      <tr>
+        <td style="padding-top:12px;text-align:center;">
+          <p style="margin:0;font-family:Georgia,serif;font-size:12px;color:#9A9490;font-style:italic;">This is a design concept based on best practices for your industry. Your actual rebuild would be fully customized.</p>
+        </td>
+      </tr>
+    </table>` : '';
 
   return `
-    <div style="max-width:680px; margin:0 auto; font-family:Georgia,serif; color:#1A1714; background:#F7F3EE; padding:40px 20px;">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#F7F3EE;">
+    <tr>
+      <td align="center" style="padding:32px 16px;">
+        <table width="600" cellpadding="0" cellspacing="0" border="0" style="max-width:600px;width:100%;">
 
-      <div style="text-align:center; margin-bottom:40px;">
-        <p style="font-size:0.75rem; letter-spacing:0.12em; text-transform:uppercase; color:#C8522A; margin-bottom:8px;">Full Website Audit Report</p>
-        <h1 style="font-size:1.6rem; margin:8px 0; word-break:break-all; color:#1A1714;">${url}</h1>
-        <div style="display:inline-block; background:#1A1714; padding:16px 32px; border-radius:4px; margin-top:16px;">
-          <span style="font-size:3rem; color:#fff; font-weight:700;">${report.score}</span>
-          <span style="font-size:1.2rem; color:rgba(255,255,255,0.5);">/100 &nbsp;·&nbsp; ${report.grade}</span>
-        </div>
-      </div>
+          <!-- HEADER -->
+          <tr>
+            <td style="padding-bottom:40px;text-align:center;">
+              <p style="margin:0 0 10px;font-family:Arial,sans-serif;font-size:11px;letter-spacing:2px;text-transform:uppercase;color:#C8522A;">Full Website Audit Report</p>
+              <h1 style="margin:0 0 16px;font-family:Georgia,serif;font-size:20px;color:#1A1714;word-break:break-all;">${url}</h1>
+              <div style="display:inline-block;background:#1A1714;padding:16px 32px;border-radius:4px;">
+                <span style="font-family:Georgia,serif;font-size:48px;color:#ffffff;font-weight:bold;">${report.score}</span>
+                <span style="font-family:Georgia,serif;font-size:18px;color:rgba(255,255,255,0.5);">&nbsp;/100&nbsp;&nbsp;&middot;&nbsp;&nbsp;${report.grade}</span>
+              </div>
+            </td>
+          </tr>
 
-      <div style="background:#fff; border-left:3px solid #C8522A; padding:20px; margin-bottom:40px; font-size:1rem; line-height:1.7; color:#4A4540; font-style:italic; border-radius:0 4px 4px 0;">
-        ${report.summary}
-      </div>
+          <!-- SUMMARY -->
+          <tr>
+            <td style="padding-bottom:40px;">
+              <div style="background:#ffffff;border-left:4px solid #C8522A;padding:20px;border-radius:0 4px 4px 0;">
+                <p style="margin:0;font-family:Georgia,serif;font-size:16px;color:#4A4540;line-height:1.7;font-style:italic;">${report.summary}</p>
+              </div>
+            </td>
+          </tr>
 
-      ${mockupSection}
+          <!-- MOCKUP -->
+          <tr>
+            <td>${mockupSection}</td>
+          </tr>
 
-      <h2 style="font-family:Georgia,serif; font-size:1.3rem; margin:0 0 20px; color:#1A1714;">Detailed Findings</h2>
-      ${sectionHTML}
+          <!-- FINDINGS HEADING -->
+          <tr>
+            <td style="padding-bottom:20px;">
+              <h2 style="margin:0;font-family:Georgia,serif;font-size:24px;color:#1A1714;">Detailed Findings</h2>
+            </td>
+          </tr>
 
-      <div style="background:#1A1714; padding:32px; border-radius:4px; text-align:center; margin-top:40px;">
-        <p style="color:#fff; font-family:Georgia,serif; font-size:1.2rem; margin-bottom:8px;">Ready to make this real?</p>
-        <p style="color:rgba(255,255,255,0.5); font-size:0.88rem; margin-bottom:20px; font-weight:300;">Book a free 15-minute call. We'll talk through the priorities and I'll show you exactly what your rebuild would look like. Flat fee $1,500, 2-week delivery.</p>
-        <a href="https://calendly.com/tim-shephard/free-15-min-website-call" style="background:#C8522A; color:#fff; padding:12px 28px; border-radius:2px; text-decoration:none; font-size:0.9rem; font-family:Georgia,serif;">Book your free call →</a>
-      </div>
+          <!-- SECTIONS -->
+          <tr>
+            <td style="padding-bottom:16px;">
+              ${sectionsHTML}
+            </td>
+          </tr>
 
-      <p style="text-align:center; font-size:0.75rem; color:#9A9490; margin-top:32px;">Tim Shephard · Creative Mind Ventures · Grand Prairie, TX</p>
-    </div>
-  `;
+          <!-- CTA BLOCK -->
+          <tr>
+            <td>
+              <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#1A1714;border-radius:4px;">
+                <tr>
+                  <td style="padding:32px 24px;text-align:center;">
+                    <p style="margin:0 0 8px;font-family:Georgia,serif;font-size:22px;color:#ffffff;">Ready to make this real?</p>
+                    <p style="margin:0 0 20px;font-family:Georgia,serif;font-size:14px;color:rgba(255,255,255,0.5);">Book a free 15-minute call. We&#8217;ll talk through the priorities and show you exactly what your rebuild would look like. Flat fee $1,500, 2-week delivery.</p>
+                    <table width="100%" cellpadding="0" cellspacing="0" border="0">
+                      <tr>
+                        <td>
+                          <a href="https://calendly.com/tim-shephard/free-15-min-website-call" style="display:block;background:#C8522A;color:#ffffff;padding:18px 24px;border-radius:2px;text-decoration:none;font-family:Georgia,serif;font-size:16px;text-align:center;line-height:1.3;">Book your free call &#8594;</a>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- FOOTER -->
+          <tr>
+            <td style="padding-top:28px;text-align:center;">
+              <p style="margin:0;font-family:Georgia,serif;font-size:12px;color:#9A9490;">Tim Shephard &middot; Creative Mind Ventures &middot; Grand Prairie, TX</p>
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>`;
 }

@@ -56,7 +56,7 @@ export async function POST(request) {
 
     const allLinks = extractLinks(rawHomepage, url);
     const priorityKeywords = ['service', 'about', 'contact', 'pricing', 'price', 'team', 'staff', 'booking', 'appointment', 'menu'];
-    
+
     const priorityLinks = priorityKeywords
       .map(kw => allLinks.find(l => l.toLowerCase().includes(kw)))
       .filter(Boolean)
@@ -121,9 +121,9 @@ Rules:
         model: 'claude-sonnet-4-20250514',
         max_tokens: 1500,
         system: systemPrompt,
-        messages: [{ 
-          role: 'user', 
-          content: 'Website URL: ' + url + '\nPages crawled: ' + Object.keys(siteData).join(', ') + '\n\n' + combinedContent 
+        messages: [{
+          role: 'user',
+          content: 'Website URL: ' + url + '\nPages crawled: ' + Object.keys(siteData).join(', ') + '\n\n' + combinedContent
         }]
       })
     });
@@ -146,8 +146,8 @@ Rules:
           body: JSON.stringify({
             model: 'claude-sonnet-4-20250514',
             max_tokens: 4000,
-            messages: [{ 
-              role: 'user', 
+            messages: [{
+              role: 'user',
               content: `Generate a single clean, modern, high-converting homepage design for a ${audit.industry} business as a complete self-contained HTML file. Requirements: inline styles only, no external CSS, use Google Fonts via a single link tag, fixed navigation bar with logo and CTA button, hero section with compelling headline and CTA, services section with 3 cards, trust/social proof section, final CTA section. Use a cohesive professional color palette. Page should look like a real $5,000 website. Return ONLY the complete HTML starting with <!DOCTYPE html>, no explanation, no markdown backticks.`
             }]
           })
@@ -159,6 +159,22 @@ Rules:
         }
       } catch(e) {
         console.error('Teaser mockup error:', e);
+      }
+    }
+
+    // Generate a direct Stripe checkout URL for the email CTA
+    let checkoutUrl = null;
+    if (email) {
+      try {
+        const coRes = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/create-checkout-session`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, websiteUrl: url })
+        });
+        const coData = await coRes.json();
+        checkoutUrl = coData.url || null;
+      } catch (e) {
+        console.error('Checkout session creation error:', e);
       }
     }
 
@@ -177,7 +193,7 @@ Rules:
         })
       }).catch(() => {});
 
-      await sendAuditEmail(email, url, audit, teaserImageUrl).catch(() => {});
+      await sendAuditEmail(email, url, audit, teaserImageUrl, checkoutUrl).catch(() => {});
     }
 
     return Response.json({ audit, pagesCrawled: Object.keys(siteData) });
@@ -217,73 +233,10 @@ async function screenshotHtml(html) {
   }
 }
 
-async function sendAuditEmail(email, url, audit, teaserImageUrl) {
-  const scoreColor = audit.score >= 80 ? '#3B6D11' : audit.score >= 60 ? '#854F0B' : '#993C1D';
-  const impactColor = (impact) => {
-    if (impact === 'high') return { bg: '#FAECE7', color: '#993C1D' };
-    if (impact === 'medium') return { bg: '#FAEEDA', color: '#854F0B' };
-    return { bg: '#EAF3DE', color: '#3B6D11' };
-  };
+async function sendAuditEmail(email, url, audit, teaserImageUrl, checkoutUrl) {
+  const htmlContent = buildAuditEmailHTML(url, audit, teaserImageUrl, checkoutUrl);
 
-  const issuesHTML = audit.issues?.map(issue => {
-    const ic = impactColor(issue.impact);
-    return `
-      <div style="background:#fff; border:1px solid #e8e4df; border-radius:4px; padding:16px; margin-bottom:12px;">
-        <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:8px;">
-          <strong style="font-size:0.92rem; color:#1A1714;">${issue.title}</strong>
-          <span style="font-size:0.7rem; padding:2px 8px; border-radius:2px; background:${ic.bg}; color:${ic.color}; white-space:nowrap; margin-left:12px;">${issue.impact} impact</span>
-        </div>
-        <p style="font-size:0.85rem; color:#4A4540; line-height:1.6; margin:0;">${issue.description}</p>
-      </div>
-    `;
-  }).join('') || '';
-
-  const htmlContent = `
-    <div style="max-width:640px; margin:0 auto; font-family:Georgia,serif; color:#1A1714; background:#F7F3EE; padding:40px 20px;">
-
-      <div style="text-align:center; margin-bottom:32px;">
-        <p style="font-size:0.72rem; letter-spacing:0.12em; text-transform:uppercase; color:#C8522A; margin-bottom:8px;">Free Website Audit</p>
-        <h1 style="font-size:1.4rem; margin:0 0 16px; word-break:break-all;">${url}</h1>
-        <div style="display:inline-block; background:#1A1714; padding:12px 28px; border-radius:4px;">
-          <span style="font-size:2.5rem; color:#fff; font-weight:700; font-family:Georgia,serif;">${audit.score}</span>
-          <span style="font-size:1rem; color:rgba(255,255,255,0.5);">/100 · ${audit.grade}</span>
-        </div>
-      </div>
-
-      <div style="background:#fff; border-left:3px solid #C8522A; padding:16px 20px; margin-bottom:32px; border-radius:0 4px 4px 0;">
-        <p style="font-size:0.95rem; color:#4A4540; line-height:1.7; font-style:italic; margin:0;">${audit.summary}</p>
-      </div>
-
-      <h2 style="font-family:Georgia,serif; font-size:1.1rem; margin:0 0 16px;">What we found</h2>
-
-      ${teaserImageUrl ? `
-      <div style="margin:32px 0; text-align:center;">
-        <p style="font-size:0.72rem; letter-spacing:0.12em; text-transform:uppercase; color:#C8522A; margin-bottom:8px;">What a high-converting ${audit.industry} site looks like</p>
-        <h2 style="font-family:Georgia,serif; font-size:1.1rem; margin:0 0 8px; color:#1A1714;">Your site could look like this.</h2>
-        <p style="font-size:0.85rem; color:#4A4540; margin-bottom:16px;">Built around your business, your services, and your customers.</p>
-        <div style="border:3px solid #C8522A; border-radius:4px; overflow:hidden;">
-          <img src="${teaserImageUrl}" alt="Example ${audit.industry} website" style="width:100%; display:block;" />
-        </div>
-        <p style="font-size:0.78rem; color:#9A9490; text-align:center; margin-top:8px; font-style:italic;">This is a high-converting example for your industry. Your paid report includes a custom version built around your actual business.</p>
-      </div>
-      ` : ''}
-
-      ${issuesHTML}
-
-      <div style="background:#1A1714; border-radius:4px; padding:28px; margin-top:32px; text-align:center;">
-        <p style="font-family:Georgia,serif; font-size:1.1rem; color:#fff; margin-bottom:8px;">Want the full picture?</p>
-        <p style="font-size:0.85rem; color:rgba(255,255,255,0.5); margin-bottom:8px; font-weight:300;">The full report goes 7 sections deep with specific fixes, priority order, and estimated impact on your revenue.</p>
-        <p style="font-size:0.85rem; color:rgba(255,255,255,0.7); margin-bottom:20px; font-weight:400;">Plus — you get a <strong style="color:#C8522A;">visual mockup of your reimagined homepage</strong>, built specifically around your business. See exactly what your site could look like before you spend a dollar on a rebuild.</p>
-        <a href="${process.env.NEXT_PUBLIC_BASE_URL}#audit" style="display:inline-block; background:#C8522A; color:#fff; padding:12px 24px; border-radius:2px; text-decoration:none; font-size:0.9rem; font-family:Georgia,serif; margin-bottom:16px;">Get full report + mockup — $147 →</a>
-        <br />
-        <a href="https://calendly.com/tim-shephard/free-15-min-website-call" style="font-size:0.82rem; color:rgba(255,255,255,0.4); text-decoration:none;">Or book a free 15-min call instead</a>
-      </div>
-
-      <p style="text-align:center; font-size:0.72rem; color:#9A9490; margin-top:28px;">Tim Shephard · Creative Mind Ventures · Grand Prairie, TX</p>
-    </div>
-  `;
-
-  await fetch('https://api.brevo.com/v3/smtp/email', {
+  const res = await fetch('https://api.brevo.com/v3/smtp/email', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -296,4 +249,141 @@ async function sendAuditEmail(email, url, audit, teaserImageUrl) {
       htmlContent
     })
   });
+
+  if (!res.ok) {
+    const err = await res.text();
+    throw new Error(`Brevo error: ${err}`);
+  }
+}
+
+function buildAuditEmailHTML(url, audit, teaserImageUrl, checkoutUrl) {
+  const impactColors = {
+    high:   { bg: '#FAECE7', color: '#993C1D' },
+    medium: { bg: '#FAEEDA', color: '#854F0B' },
+    low:    { bg: '#EAF3DE', color: '#3B6D11' },
+  };
+
+  const issuesHTML = (audit.issues || []).map(issue => {
+    const ic = impactColors[issue.impact] || impactColors.low;
+    return `
+      <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:12px;border-radius:4px;border:1px solid #e8e4df;background:#ffffff;">
+        <tr>
+          <td style="padding:18px;">
+            <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:10px;">
+              <tr>
+                <td style="font-family:Georgia,serif;font-size:15px;font-weight:bold;color:#1A1714;padding-right:12px;">${issue.title}</td>
+                <td width="100" align="right" valign="top" style="white-space:nowrap;">
+                  <span style="display:inline-block;font-family:Arial,sans-serif;font-size:11px;padding:4px 9px;border-radius:2px;background:${ic.bg};color:${ic.color};white-space:nowrap;">${issue.impact} impact</span>
+                </td>
+              </tr>
+            </table>
+            <p style="margin:0;font-family:Georgia,serif;font-size:14px;color:#4A4540;line-height:1.7;">${issue.description}</p>
+          </td>
+        </tr>
+      </table>`;
+  }).join('');
+
+  const mockupHTML = teaserImageUrl ? `
+    <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:32px 0;">
+      <tr>
+        <td style="text-align:center;padding-bottom:16px;">
+          <p style="margin:0 0 6px;font-family:Arial,sans-serif;font-size:11px;letter-spacing:2px;text-transform:uppercase;color:#C8522A;">What a high-converting ${audit.industry || 'local business'} site looks like</p>
+          <h2 style="margin:0 0 8px;font-family:Georgia,serif;font-size:20px;color:#1A1714;">Your site could look like this.</h2>
+          <p style="margin:0 0 16px;font-family:Georgia,serif;font-size:14px;color:#4A4540;">Built around your business, your services, and your customers.</p>
+        </td>
+      </tr>
+      <tr>
+        <td style="border:3px solid #C8522A;border-radius:4px;line-height:0;font-size:0;">
+          <img src="${teaserImageUrl}" alt="Redesigned website example" width="600" style="width:100%;max-width:600px;height:auto;display:block;border:0;" />
+        </td>
+      </tr>
+      <tr>
+        <td style="padding-top:8px;text-align:center;">
+          <p style="margin:0;font-family:Georgia,serif;font-size:12px;color:#9A9490;font-style:italic;">This is a high-converting example for your industry. Your paid report includes a custom version built around your actual business.</p>
+        </td>
+      </tr>
+    </table>` : '';
+
+  const ctaUrl = checkoutUrl || `${process.env.NEXT_PUBLIC_BASE_URL}`;
+
+  return `
+  <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#F7F3EE;">
+    <tr>
+      <td align="center" style="padding:32px 16px;">
+        <table width="600" cellpadding="0" cellspacing="0" border="0" style="max-width:600px;width:100%;">
+
+          <!-- HEADER -->
+          <tr>
+            <td style="padding-bottom:32px;text-align:center;">
+              <p style="margin:0 0 10px;font-family:Arial,sans-serif;font-size:11px;letter-spacing:2px;text-transform:uppercase;color:#C8522A;">Free Website Audit</p>
+              <h1 style="margin:0 0 20px;font-family:Georgia,serif;font-size:20px;color:#1A1714;word-break:break-all;">${url}</h1>
+              <div style="display:inline-block;background:#1A1714;padding:14px 28px;border-radius:4px;">
+                <span style="font-family:Georgia,serif;font-size:42px;color:#ffffff;font-weight:bold;">${audit.score}</span>
+                <span style="font-family:Georgia,serif;font-size:16px;color:rgba(255,255,255,0.5);">&nbsp;/100&nbsp;&nbsp;&middot;&nbsp;&nbsp;${audit.grade}</span>
+              </div>
+            </td>
+          </tr>
+
+          <!-- SUMMARY -->
+          <tr>
+            <td style="padding-bottom:32px;">
+              <div style="background:#ffffff;border-left:4px solid #C8522A;padding:18px 20px;border-radius:0 4px 4px 0;">
+                <p style="margin:0;font-family:Georgia,serif;font-size:16px;color:#4A4540;line-height:1.7;font-style:italic;">${audit.summary}</p>
+              </div>
+            </td>
+          </tr>
+
+          <!-- ISSUES HEADING -->
+          <tr>
+            <td style="padding-bottom:16px;">
+              <h2 style="margin:0;font-family:Georgia,serif;font-size:22px;color:#1A1714;">What we found</h2>
+            </td>
+          </tr>
+
+          <!-- ISSUES -->
+          <tr>
+            <td style="padding-bottom:8px;">
+              ${issuesHTML}
+            </td>
+          </tr>
+
+          <!-- MOCKUP TEASER -->
+          <tr>
+            <td>${mockupHTML}</td>
+          </tr>
+
+          <!-- CTA BLOCK -->
+          <tr>
+            <td style="padding-top:8px;">
+              <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#1A1714;border-radius:4px;">
+                <tr>
+                  <td style="padding:32px 24px;text-align:center;">
+                    <p style="margin:0 0 10px;font-family:Georgia,serif;font-size:22px;color:#ffffff;">Want the full picture?</p>
+                    <p style="margin:0 0 8px;font-family:Georgia,serif;font-size:14px;color:rgba(255,255,255,0.5);">The full report goes 7 sections deep with specific fixes and priority order.</p>
+                    <p style="margin:0 0 24px;font-family:Georgia,serif;font-size:14px;color:rgba(255,255,255,0.7);">Plus a <strong style="color:#C8522A;">visual mockup of your reimagined homepage</strong> &#8212; built specifically around your business.</p>
+                    <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:16px;">
+                      <tr>
+                        <td>
+                          <a href="${ctaUrl}" style="display:block;background:#C8522A;color:#ffffff;padding:18px 24px;border-radius:2px;text-decoration:none;font-family:Georgia,serif;font-size:16px;text-align:center;line-height:1.3;">Get Your Full Report &#8594;</a>
+                        </td>
+                      </tr>
+                    </table>
+                    <a href="https://calendly.com/tim-shephard/free-15-min-website-call" style="font-family:Georgia,serif;font-size:13px;color:rgba(255,255,255,0.4);text-decoration:none;">Or book a free 15-min call instead</a>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- FOOTER -->
+          <tr>
+            <td style="padding-top:28px;text-align:center;">
+              <p style="margin:0;font-family:Georgia,serif;font-size:12px;color:#9A9490;">Tim Shephard &middot; Creative Mind Ventures &middot; Grand Prairie, TX</p>
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>`;
 }

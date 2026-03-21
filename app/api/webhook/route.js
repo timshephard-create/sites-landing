@@ -4,6 +4,7 @@ import { NextResponse, after } from 'next/server';
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
 export const dynamic = 'force-dynamic';
+export const maxDuration = 300;
 
 // In-memory idempotency guard — prevents double-processing within the same instance
 const processedEvents = new Set();
@@ -23,7 +24,7 @@ export async function POST(request) {
   if (event.type === 'checkout.session.completed' && !processedEvents.has(event.id)) {
     processedEvents.add(event.id);
     const session = event.data.object;
-    const url = session.metadata.url;
+    const url = session.metadata.websiteUrl;
     const email = session.customer_email;
 
     // after() runs once the 200 is sent, keeping the lambda alive until the
