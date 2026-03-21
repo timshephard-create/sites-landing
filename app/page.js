@@ -119,7 +119,7 @@ export default function Home() {
                 onChange={e => setUrl(e.target.value)}
                 placeholder="https://yourbusiness.com"
                 onKeyDown={e => e.key === 'Enter' && handleUrlSubmit()}
-                style={{ flex: 1, padding: '0.9rem 1rem', border: '1px solid #ddd', borderRadius: '2px', fontSize: '0.95rem', fontFamily: 'Georgia, serif', minWidth: '200px', background: '#fff' }}
+                style={{ flex: 1, padding: '0.9rem 1rem', border: '1px solid #ddd', borderRadius: '2px', fontSize: '0.95rem', fontFamily: 'Georgia, serif', minWidth: '200px', background: '#fff', color: '#1A1714' }}
               />
               <button onClick={handleUrlSubmit}
                 style={{ background: '#C8522A', color: '#fff', border: 'none', padding: '0.9rem 2rem', borderRadius: '2px', fontSize: '0.95rem', cursor: 'pointer', fontFamily: 'Georgia, serif', whiteSpace: 'nowrap' }}>
@@ -140,7 +140,7 @@ export default function Home() {
                 onChange={e => setEmail(e.target.value)}
                 placeholder="you@yourbusiness.com"
                 onKeyDown={e => e.key === 'Enter' && handleAudit()}
-                style={{ flex: 1, padding: '0.9rem 1rem', border: '1px solid #ddd', borderRadius: '2px', fontSize: '0.95rem', fontFamily: 'Georgia, serif', minWidth: '200px', background: '#fff' }}
+                style={{ flex: 1, padding: '0.9rem 1rem', border: '1px solid #ddd', borderRadius: '2px', fontSize: '0.95rem', fontFamily: 'Georgia, serif', minWidth: '200px', background: '#fff', color: '#1A1714' }}
               />
               <button onClick={handleAudit}
                 style={{ background: '#C8522A', color: '#fff', border: 'none', padding: '0.9rem 2rem', borderRadius: '2px', fontSize: '0.95rem', cursor: 'pointer', fontFamily: 'Georgia, serif', whiteSpace: 'nowrap' }}>
@@ -216,7 +216,7 @@ export default function Home() {
       {/* WHAT YOU GET */}
       <section style={{ padding: '6rem 2rem', background: '#fff' }}>
         <div style={{ maxWidth: '1100px', margin: '0 auto' }}>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '4rem', alignItems: 'start' }}>
+          <div className="two-col-grid">
             <div>
               <p style={{ fontSize: '0.75rem', fontWeight: 500, letterSpacing: '0.12em', textTransform: 'uppercase', color: '#C8522A', marginBottom: '1rem' }}>What's included</p>
               <h2 style={{ fontFamily: 'Georgia, serif', fontSize: 'clamp(2rem, 4vw, 3rem)', lineHeight: 1.2, marginBottom: '1.25rem' }}>Everything you need. Nothing you don't.</h2>
@@ -248,7 +248,7 @@ export default function Home() {
 
       {/* ABOUT */}
       <section style={{ padding: '6rem 2rem', background: '#F7F3EE' }}>
-        <div style={{ maxWidth: '1100px', margin: '0 auto', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6rem', alignItems: 'center' }}>
+        <div className="about-grid">
           <div>
             <p style={{ fontSize: '0.75rem', fontWeight: 500, letterSpacing: '0.12em', textTransform: 'uppercase', color: '#C8522A', marginBottom: '1rem' }}>Who I am</p>
             <h2 style={{ fontFamily: 'Georgia, serif', fontSize: 'clamp(2rem, 4vw, 3rem)', lineHeight: 1.2, marginBottom: '1.5rem' }}>A Creative Director.<br />Based right here<br />in DFW.</h2>
