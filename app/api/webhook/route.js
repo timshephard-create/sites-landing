@@ -1,5 +1,5 @@
 import Stripe from 'stripe';
-import { NextResponse } from 'next/server';
+import { NextResponse, after } from 'next/server';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
@@ -26,13 +26,19 @@ export async function POST(request) {
     const url = session.metadata.url;
     const email = session.customer_email;
 
-    // Fire and forget — do NOT await. Report generation takes 30-60s and Stripe
-    // will retry if it doesn't receive a 200 within its timeout window.
-    fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/report`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ url, email })
-    }).catch(err => console.error('Report generation error:', err));
+    // Use after() so the fetch runs after the 200 is sent but before the
+    // lambda is frozen — prevents Stripe retries while still generating the report.
+    after(async () => {
+      try {
+        await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/report`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ url, email })
+        });
+      } catch (err) {
+        console.error('Report generation error:', err);
+      }
+    });
   }
 
   // Always return 200 immediately so Stripe does not retry

@@ -219,8 +219,9 @@ async function screenshotHtml(html) {
       return null;
     }
 
-    await res.arrayBuffer();
-    return screenshotUrl;
+    const buffer = await res.arrayBuffer();
+    const base64 = Buffer.from(buffer).toString('base64');
+    return `data:image/jpeg;base64,${base64}`;
 
   } catch(e) {
     console.error('Screenshot error:', e);
