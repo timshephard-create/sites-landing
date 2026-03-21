@@ -1,3 +1,5 @@
+export const maxDuration = 300;
+
 export async function POST(request) {
   const { url, email } = await request.json();
 

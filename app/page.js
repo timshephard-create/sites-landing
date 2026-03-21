@@ -43,13 +43,18 @@ export default function Home() {
   };
 
   const handleCheckout = async () => {
-    const res = await fetch('/api/checkout', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ url, email })
-    });
-    const data = await res.json();
-    if (data.url) window.location.href = data.url;
+    try {
+      const res = await fetch('/api/checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url, email })
+      });
+      const data = await res.json();
+      if (data.url) window.location.href = data.url;
+      else setError('Checkout failed. Please try again.');
+    } catch (e) {
+      setError('Checkout failed. Please try again.');
+    }
   };
 
   const scoreColor = (score) => {
