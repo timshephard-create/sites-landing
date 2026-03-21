@@ -202,17 +202,16 @@ export default function Home() {
 
             <div style={{ background: '#1A1714', borderRadius: '4px', padding: '2rem', marginTop: '2rem', textAlign: 'center' }}>
               <p style={{ fontFamily: 'Georgia, serif', fontSize: '1.3rem', color: '#fff', marginBottom: '0.5rem' }}>Want the full picture?</p>
-              <p style={{ fontSize: '0.88rem', color: 'rgba(255,255,255,0.5)', marginBottom: '1.5rem', fontWeight: 300 }}>Get a detailed report with specific fixes, priority order, and estimated impact — delivered to your inbox.</p>
-              <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center', flexWrap: 'wrap' }}>
-                <a href="https://calendly.com/tim-shephard/free-15-min-website-call" target="_blank" rel="noreferrer"
-                  style={{ background: '#fff', color: '#1A1714', padding: '0.9rem 1.8rem', borderRadius: '2px', fontSize: '0.9rem', textDecoration: 'none', fontFamily: 'Georgia, serif' }}>
-                  Book a free call
-                </a>
-                <button onClick={handleCheckout} style={{ background: '#C8522A', color: '#fff', border: 'none', padding: '0.9rem 1.8rem', borderRadius: '2px', fontSize: '0.9rem', cursor: 'pointer', fontFamily: 'Georgia, serif' }}>
-                  Get full report + mockup — $147
-                </button>
-              </div>
-              <p style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.25)', marginTop: '1rem' }}>Full report delivered to {email} within 2 minutes</p>
+              <p style={{ fontSize: '0.88rem', color: 'rgba(255,255,255,0.5)', marginBottom: '0.5rem', fontWeight: 300 }}>7-section deep-dive with specific fixes, priority order, and a custom mockup of your homepage — delivered to your inbox in minutes.</p>
+              <p style={{ fontSize: '0.88rem', color: 'rgba(255,255,255,0.7)', marginBottom: '1.5rem' }}>Everything in the free audit is fixable. The full report shows you exactly how.</p>
+              <button onClick={handleCheckout} style={{ display: 'block', width: '100%', background: '#C8522A', color: '#fff', border: 'none', padding: '1rem 1.8rem', borderRadius: '2px', fontSize: '1rem', cursor: 'pointer', fontFamily: 'Georgia, serif', marginBottom: '0.75rem' }}>
+                Get Full Report + Custom Mockup — $147
+              </button>
+              <p style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.25)', marginBottom: '1.25rem' }}>Delivered to {email} within 2 minutes</p>
+              <p style={{ fontSize: '0.78rem', color: 'rgba(255,255,255,0.3)', margin: 0 }}>
+                Not ready to buy?&nbsp;
+                <a href="https://calendly.com/tim-shephard/free-15-min-website-call" target="_blank" rel="noreferrer" style={{ color: 'rgba(255,255,255,0.4)', textDecoration: 'underline' }}>Book a free 15-min call instead</a>
+              </p>
             </div>
           </div>
         )}

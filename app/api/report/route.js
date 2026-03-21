@@ -377,12 +377,12 @@ function buildEmailHTML(url, report, mockupImageData) {
               <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#1A1714;border-radius:4px;">
                 <tr>
                   <td style="padding:32px 24px;text-align:center;">
-                    <p style="margin:0 0 8px;font-family:Georgia,serif;font-size:22px;color:#ffffff;">Ready to make this real?</p>
-                    <p style="margin:0 0 20px;font-family:Georgia,serif;font-size:14px;color:rgba(255,255,255,0.5);">Book a free 15-minute call. We&#8217;ll talk through the priorities and show you exactly what your rebuild would look like. Flat fee $1,500, 2-week delivery.</p>
+                    <p style="margin:0 0 12px;font-family:Georgia,serif;font-size:24px;color:#ffffff;">Ready to fix this?</p>
+                    <p style="margin:0 0 24px;font-family:Georgia,serif;font-size:15px;color:rgba(255,255,255,0.6);line-height:1.7;">You&#8217;ve just seen exactly what&#8217;s holding your website back. Everything in this report is fixable. I do flat-fee website rebuilds for local businesses at $1,500, delivered in two weeks. No ongoing fees, no surprises. No fluff.</p>
                     <table width="100%" cellpadding="0" cellspacing="0" border="0">
                       <tr>
                         <td>
-                          <a href="https://calendly.com/tim-shephard/free-15-min-website-call" style="display:block;background:#C8522A;color:#ffffff;padding:18px 24px;border-radius:2px;text-decoration:none;font-family:Georgia,serif;font-size:16px;text-align:center;line-height:1.3;">Book your free call &#8594;</a>
+                          <a href="https://calendly.com/tim-shephard/free-15-min-website-call" style="display:block;background:#C8522A;color:#ffffff;padding:18px 24px;border-radius:2px;text-decoration:none;font-family:Georgia,serif;font-size:16px;text-align:center;line-height:1.3;">Book a Free 15-Min Call &#8594;</a>
                         </td>
                       </tr>
                     </table>

@@ -368,7 +368,7 @@ function buildAuditEmailHTML(url, audit, teaserImageUrl, checkoutUrl) {
                         </td>
                       </tr>
                     </table>
-                    <a href="https://calendly.com/tim-shephard/free-15-min-website-call" style="font-family:Georgia,serif;font-size:13px;color:rgba(255,255,255,0.4);text-decoration:none;">Or book a free 15-min call instead</a>
+                    <p style="margin:0;font-family:Georgia,serif;font-size:13px;color:rgba(255,255,255,0.35);">Rather just talk? calendly.com/tim-shephard/free-15-min-website-call</p>
                   </td>
                 </tr>
               </table>
