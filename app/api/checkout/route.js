@@ -11,14 +11,7 @@ export async function POST(request) {
     payment_method_types: ['card'],
     line_items: [
       {
-        price_data: {
-          currency: 'usd',
-          product_data: {
-            name: 'Full Website Audit Report + Homepage Mockup',
-            description: `Complete SEO, performance & conversion audit for ${url}`,
-          },
-          unit_amount: 14700,
-        },
+        price: process.env.STRIPE_PRICE_ID,
         quantity: 1,
       },
     ],
