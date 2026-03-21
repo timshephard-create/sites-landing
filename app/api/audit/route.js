@@ -364,7 +364,7 @@ function buildAuditEmailHTML(url, audit, teaserImageUrl, checkoutUrl) {
                     <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:16px;">
                       <tr>
                         <td>
-                          <a href="${ctaUrl}" style="display:block;background:#C8522A;color:#ffffff;padding:18px 24px;border-radius:2px;text-decoration:none;font-family:Georgia,serif;font-size:16px;text-align:center;line-height:1.3;">Get Your Full Report &#8594;</a>
+                          <a href="${ctaUrl}" data-link-tracking="false" style="display:block;background:#C8522A;color:#ffffff;padding:18px 24px;border-radius:2px;text-decoration:none;font-family:Georgia,serif;font-size:16px;text-align:center;line-height:1.3;">Get Your Full Report &#8594;</a>
                         </td>
                       </tr>
                     </table>
