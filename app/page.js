@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 export default function Home() {
   const [url, setUrl] = useState('');
@@ -8,6 +8,25 @@ export default function Home() {
   const [audit, setAudit] = useState(null);
   const [error, setError] = useState('');
   const [pagesCrawled, setPagesCrawled] = useState([]);
+  const [exitIntentShown, setExitIntentShown] = useState(false);
+  const [exitIntentDismissed, setExitIntentDismissed] = useState(false);
+  const [stickyDismissed, setStickyDismissed] = useState(false);
+  const [showSticky, setShowSticky] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => setShowSticky(window.scrollY > 300);
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  useEffect(() => {
+    if (step !== 'results' || exitIntentShown || exitIntentDismissed) return;
+    const handleMouseMove = (e) => {
+      if (e.clientY < 50) setExitIntentShown(true);
+    };
+    document.addEventListener('mousemove', handleMouseMove);
+    return () => document.removeEventListener('mousemove', handleMouseMove);
+  }, [step, exitIntentShown, exitIntentDismissed]);
 
   const handleUrlSubmit = () => {
     if (!url || !url.startsWith('http')) {
@@ -67,6 +86,31 @@ export default function Home() {
     if (impact === 'high') return { bg: '#FAECE7', color: '#993C1D' };
     if (impact === 'medium') return { bg: '#FAEEDA', color: '#854F0B' };
     return { bg: '#EAF3DE', color: '#3B6D11' };
+  };
+
+  const getUrgencyStats = (issues) => {
+    if (!issues?.length) return [];
+    const text = issues.map(i => `${i.title} ${i.description}`).join(' ').toLowerCase();
+    const stats = [];
+    if (text.includes('ssl') || text.includes('https') || text.includes('secure')) {
+      stats.push('Sites without SSL lose 15–20% of visitors due to "Not Secure" browser warnings.');
+    }
+    if (text.includes('mobile') || text.includes('responsive')) {
+      stats.push('53% of web traffic is mobile. A site that doesn\'t work on phones loses more than half its audience.');
+    }
+    if (text.includes('speed') || text.includes('slow') || text.includes('load') || text.includes('performance')) {
+      stats.push('A 1-second delay in page load time reduces conversions by 7%.');
+    }
+    if (text.includes('contact') || text.includes('phone') || text.includes('booking') || text.includes('call')) {
+      stats.push('Visitors who can\'t find a phone number or booking link within 5 seconds leave and don\'t come back.');
+    }
+    if (text.includes('email') || text.includes('capture') || text.includes('newsletter') || text.includes('list')) {
+      stats.push('Businesses without email capture lose 97% of first-time visitors permanently.');
+    }
+    if (text.includes('seo') || text.includes('google') || text.includes('search') || text.includes('keyword')) {
+      stats.push('76% of people who search for a local business on their phone visit within a day — if they can find you.');
+    }
+    return stats.slice(0, 3);
   };
 
   return (
@@ -167,6 +211,7 @@ export default function Home() {
 
         {step === 'results' && audit && (
           <div>
+            {/* Score + summary */}
             <div style={{ background: '#fff', border: '1px solid #e8e4df', borderRadius: '4px', padding: '2rem', marginBottom: '1.5rem' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem', marginBottom: '1.5rem' }}>
                 <div style={{ width: '80px', height: '80px', borderRadius: '50%', background: scoreColor(audit.score), display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
@@ -200,7 +245,58 @@ export default function Home() {
               );
             })}
 
-            <div style={{ background: '#1A1714', borderRadius: '4px', padding: '2rem', marginTop: '2rem', textAlign: 'center' }}>
+            {/* HONEST URGENCY BOX */}
+            {(() => {
+              const stats = getUrgencyStats(audit.issues);
+              if (!stats.length) return null;
+              return (
+                <div style={{ background: '#FAECE7', border: '1px solid #E8C4B4', borderRadius: '4px', padding: '1.5rem', marginTop: '1.5rem' }}>
+                  <p style={{ fontFamily: 'Georgia, serif', fontSize: '1rem', fontWeight: 700, color: '#993C1D', marginBottom: '1rem' }}>What these issues are costing you:</p>
+                  <ul style={{ margin: 0, padding: 0, listStyle: 'none' }}>
+                    {stats.map((stat, i) => (
+                      <li key={i} style={{ display: 'flex', gap: '0.75rem', alignItems: 'flex-start', marginBottom: i < stats.length - 1 ? '0.75rem' : 0 }}>
+                        <span style={{ color: '#993C1D', fontSize: '0.9rem', flexShrink: 0, marginTop: '2px' }}>→</span>
+                        <span style={{ fontSize: '0.88rem', color: '#6B2E18', lineHeight: 1.6, fontWeight: 300 }}>{stat}</span>
+                      </li>
+                    ))}
+                  </ul>
+                  <button onClick={handleCheckout} style={{ display: 'block', width: '100%', background: '#C8522A', color: '#fff', border: 'none', padding: '0.85rem 1.5rem', borderRadius: '2px', fontSize: '0.9rem', cursor: 'pointer', fontFamily: 'Georgia, serif', marginTop: '1.25rem' }}>
+                    See the full fix — $147 report →
+                  </button>
+                </div>
+              );
+            })()}
+
+            {/* SAMPLE REPORT TEASER */}
+            <div style={{ marginTop: '1.5rem', background: '#fff', border: '1px solid #e8e4df', borderRadius: '4px', padding: '1.5rem' }}>
+              <p style={{ fontFamily: 'Georgia, serif', fontSize: '1rem', marginBottom: '0.25rem' }}>Your full personalized report is ready.</p>
+              <p style={{ fontSize: '0.82rem', color: '#9A9490', marginBottom: '1.25rem', fontWeight: 300 }}>Here's what's inside — with specific fixes, priority order, and a custom mockup of your homepage.</p>
+              <div style={{ position: 'relative', overflow: 'hidden', borderRadius: '2px', border: '1px solid #e8e4df' }}>
+                {[
+                  { heading: 'Performance & Page Speed', lines: ['Your homepage loads in 6.2s on mobile — above the 3s threshold where 53% of visitors abandon.', 'Uncompressed images account for 4.1MB of your total 4.8MB page weight.', 'Fix: Compress all images to WebP, defer non-critical JS, enable browser caching.'] },
+                  { heading: 'Mobile Experience', lines: ['Navigation menu breaks at 375px width — tap targets are 18px, below the 44px minimum.', 'Text requires horizontal scrolling on iPhone SE. Two CTAs are completely hidden below the fold.', 'Fix: Rebuild header with mobile-first breakpoints, consolidate CTAs to single action.'] },
+                  { heading: 'Local SEO & Google Visibility', lines: ['No structured data markup found. Google cannot display your hours, reviews, or location in search.', 'Title tag is generic ("Home") — missing city name, service type, and differentiator.', 'Fix: Add LocalBusiness schema, rewrite title tags, submit updated sitemap.'] },
+                  { heading: 'Trust & Credibility Signals', lines: ['No customer reviews, testimonials, or social proof above the fold.', 'No trust badges, certifications, or credentials visible on key landing pages.', 'Fix: Add 3 testimonials with photos, display years in business, add relevant credentials.'] },
+                ].map((section, i) => (
+                  <div key={i} style={{ padding: '1rem 1.25rem', borderBottom: i < 3 ? '1px solid #e8e4df' : 'none', position: 'relative' }}>
+                    <p style={{ fontSize: '0.82rem', fontWeight: 600, color: '#1A1714', marginBottom: '0.4rem', letterSpacing: '0.02em' }}>{section.heading}</p>
+                    <div style={{ filter: 'blur(4px)', userSelect: 'none', pointerEvents: 'none' }}>
+                      {section.lines.map((line, j) => (
+                        <p key={j} style={{ fontSize: '0.78rem', color: '#4A4540', lineHeight: 1.6, margin: j < section.lines.length - 1 ? '0 0 0.3rem' : 0, fontWeight: 300 }}>{line}</p>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+                {/* Fade overlay over bottom 2 sections */}
+                <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: '55%', background: 'linear-gradient(to bottom, transparent, rgba(255,255,255,0.97))', pointerEvents: 'none' }} />
+              </div>
+              <button onClick={handleCheckout} style={{ display: 'block', width: '100%', background: '#C8522A', color: '#fff', border: 'none', padding: '1rem 1.8rem', borderRadius: '2px', fontSize: '1rem', cursor: 'pointer', fontFamily: 'Georgia, serif', marginTop: '1.25rem' }}>
+                Get Your Full Report →
+              </button>
+            </div>
+
+            {/* MAIN CTA BLOCK */}
+            <div style={{ background: '#1A1714', borderRadius: '4px', padding: '2rem', marginTop: '1.5rem', textAlign: 'center' }}>
               <p style={{ fontFamily: 'Georgia, serif', fontSize: '1.3rem', color: '#fff', marginBottom: '0.5rem' }}>Want the full picture?</p>
               <p style={{ fontSize: '0.88rem', color: 'rgba(255,255,255,0.5)', marginBottom: '0.5rem', fontWeight: 300 }}>7-section deep-dive with specific fixes, priority order, and a custom mockup of your homepage — delivered to your inbox in minutes.</p>
               <p style={{ fontSize: '0.88rem', color: 'rgba(255,255,255,0.7)', marginBottom: '1.5rem' }}>Everything in the free audit is fixable. The full report shows you exactly how.</p>
@@ -293,6 +389,40 @@ export default function Home() {
           <a href="https://calendly.com/tim-shephard/free-15-min-website-call" target="_blank" rel="noreferrer" style={{ fontSize: '0.78rem', color: 'rgba(255,255,255,0.25)', textDecoration: 'none' }}>Book a call</a>
         </div>
       </footer>
+
+      {/* MOBILE STICKY CTA — visible after 300px scroll, hidden once audit has been run */}
+      {showSticky && !stickyDismissed && step === 'idle' && (
+        <div style={{ position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 200, background: '#1A1714', borderTop: '1px solid rgba(255,255,255,0.1)', padding: '0.85rem 1.25rem', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+          <a href="#audit" style={{ flex: 1, display: 'block', background: '#C8522A', color: '#fff', padding: '0.85rem 1rem', borderRadius: '2px', fontSize: '0.9rem', textDecoration: 'none', textAlign: 'center', fontFamily: 'Georgia, serif' }}>
+            See how your site scores →
+          </a>
+          <button onClick={() => setStickyDismissed(true)} aria-label="Dismiss" style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.4)', cursor: 'pointer', fontSize: '1.2rem', padding: '0.5rem', lineHeight: 1, flexShrink: 0 }}>
+            ✕
+          </button>
+        </div>
+      )}
+
+      {/* EXIT INTENT OVERLAY */}
+      {exitIntentShown && !exitIntentDismissed && (
+        <div style={{ position: 'fixed', inset: 0, zIndex: 300, background: 'rgba(26,23,20,0.82)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1.5rem' }}>
+          <div style={{ background: '#F7F3EE', borderRadius: '4px', padding: '2.5rem', maxWidth: '480px', width: '100%', position: 'relative' }}>
+            <button onClick={() => setExitIntentDismissed(true)} aria-label="Close" style={{ position: 'absolute', top: '1rem', right: '1rem', background: 'none', border: 'none', cursor: 'pointer', color: '#9A9490', fontSize: '1.1rem', lineHeight: 1, padding: '0.25rem' }}>
+              ✕
+            </button>
+            <p style={{ fontSize: '0.72rem', fontWeight: 500, letterSpacing: '0.12em', textTransform: 'uppercase', color: '#C8522A', marginBottom: '0.75rem' }}>Don't lose your audit results</p>
+            <p style={{ fontFamily: 'Georgia, serif', fontSize: '1.4rem', lineHeight: 1.25, marginBottom: '1rem' }}>Your issues are identified.<br />The fixes are waiting.</p>
+            <p style={{ fontSize: '0.9rem', color: '#4A4540', lineHeight: 1.7, fontWeight: 300, marginBottom: '1.5rem' }}>
+              The full report gives you a prioritized action plan, specific fixes for every issue found, and a custom mockup of what your homepage could look like — delivered to your inbox in minutes.
+            </p>
+            <button onClick={() => { setExitIntentDismissed(true); handleCheckout(); }} style={{ display: 'block', width: '100%', background: '#C8522A', color: '#fff', border: 'none', padding: '1rem 1.8rem', borderRadius: '2px', fontSize: '1rem', cursor: 'pointer', fontFamily: 'Georgia, serif', marginBottom: '0.75rem' }}>
+              Get My Full Report — $147
+            </button>
+            <button onClick={() => setExitIntentDismissed(true)} style={{ display: 'block', width: '100%', background: 'none', border: 'none', color: '#9A9490', fontSize: '0.8rem', cursor: 'pointer', padding: '0.5rem', fontFamily: 'Georgia, serif' }}>
+              No thanks, I'll figure it out myself
+            </button>
+          </div>
+        </div>
+      )}
 
     </main>
   );
