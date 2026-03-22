@@ -365,6 +365,41 @@ export default function Home() {
         </div>
       </section>
 
+      {/* FAQ */}
+      <section style={{ padding: '6rem 2rem', background: '#fff' }}>
+        <div style={{ maxWidth: '700px', margin: '0 auto' }}>
+          <p style={{ fontSize: '0.75rem', fontWeight: 500, letterSpacing: '0.12em', textTransform: 'uppercase', color: '#C8522A', marginBottom: '1rem' }}>Common questions</p>
+          <h2 style={{ fontFamily: 'Georgia, serif', fontSize: 'clamp(2rem, 4vw, 3rem)', lineHeight: 1.2, marginBottom: '3rem' }}>Things people usually ask.</h2>
+          {[
+            {
+              q: 'What does $1,500 actually include?',
+              a: 'Everything you need to launch: up to 5 pages designed and built, mobile-first layout, copywriting, email capture, Google Maps integration, and basic SEO setup. One flat fee, no monthly retainer, no hidden costs. You own the site outright when we\'re done.'
+            },
+            {
+              q: 'What platform do you build on?',
+              a: 'We build on the platform that best fits your needs and budget — whether that\'s a custom-coded site for full design control, or a user-friendly CMS like Squarespace for clients who want to manage their own content after handoff. We\'ll recommend the right approach based on your goals.'
+            },
+            {
+              q: 'How does the two-week turnaround actually work?',
+              a: 'Week one is design: you\'ll see a full homepage concept and give feedback. Week two is build and launch. It moves fast, so we ask that you\'re available to review and respond within 24 hours at each stage. Most projects finish on time when clients are.'
+            },
+            {
+              q: 'Do I need to provide copy and photos?',
+              a: 'No. Copywriting is included — I\'ll write the content based on a short intake form you fill out before we start. For photos, I\'ll work with what you have, source stock where needed, or let you know if professional photography would meaningfully improve the result.'
+            },
+            {
+              q: 'What if I already have a website — can you just improve it?',
+              a: 'Sometimes. If the foundation is solid, a targeted refresh may make sense. But in most cases, rebuilding from scratch is faster, cheaper, and produces a better result than patching an outdated site. The free audit will tell you which situation you\'re in.'
+            },
+          ].map((item, i, arr) => (
+            <div key={i} style={{ borderTop: '1px solid #e8e4df', paddingTop: '1.5rem', paddingBottom: '1.5rem', borderBottom: i === arr.length - 1 ? '1px solid #e8e4df' : 'none' }}>
+              <p style={{ fontFamily: 'Georgia, serif', fontSize: '1.05rem', fontWeight: 500, marginBottom: '0.6rem' }}>{item.q}</p>
+              <p style={{ fontSize: '0.95rem', color: '#4A4540', lineHeight: 1.8, margin: 0, fontWeight: 300 }}>{item.a}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
       {/* FINAL CTA */}
       <section style={{ background: '#1A1714', padding: '7rem 2rem', textAlign: 'center' }}>
         <p style={{ fontSize: '0.75rem', fontWeight: 500, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'rgba(200,82,42,0.8)', marginBottom: '1rem' }}>Ready?</p>
