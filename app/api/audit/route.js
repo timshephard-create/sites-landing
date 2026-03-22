@@ -378,7 +378,7 @@ function buildAuditEmailHTML(url, audit, teaserImageUrl, checkoutUrl) {
           <!-- FOOTER -->
           <tr>
             <td style="padding-top:28px;text-align:center;">
-              <p style="margin:0;font-family:Georgia,serif;font-size:12px;color:#9A9490;">Tim Shephard &middot; Creative Mind Ventures &middot; Grand Prairie, TX</p>
+              <p style="margin:0;font-family:Georgia,serif;font-size:12px;color:#9A9490;">Tim Shephard &middot; Creative Mind Ventures &middot; Dallas-Fort Worth, TX</p>
             </td>
           </tr>
 

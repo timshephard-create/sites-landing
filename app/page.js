@@ -359,7 +359,7 @@ export default function Home() {
           </div>
           <div>
             <p style={{ fontSize: '1.05rem', color: '#4A4540', lineHeight: 1.8, fontWeight: 300, marginBottom: '1.5rem' }}>I've spent 20 years helping brands communicate clearly and connect with the people who matter most to them.</p>
-            <p style={{ fontSize: '1.05rem', color: '#4A4540', lineHeight: 1.8, fontWeight: 300, marginBottom: '1.5rem' }}>I live in Grand Prairie. I know this market. And I started offering flat-fee website rebuilds because I kept seeing great local businesses being let down by their online presence.</p>
+            <p style={{ fontSize: '1.05rem', color: '#4A4540', lineHeight: 1.8, fontWeight: 300, marginBottom: '1.5rem' }}>I'm based in the Dallas-Fort Worth area. I know this market. And I started offering flat-fee website rebuilds because I kept seeing great local businesses being let down by their online presence.</p>
             <a href="https://timshephard.co" target="_blank" rel="noreferrer" style={{ fontSize: '0.85rem', color: '#C8522A', textDecoration: 'none', borderBottom: '1px solid rgba(200,82,42,0.3)', paddingBottom: '2px' }}>See my full portfolio →</a>
           </div>
         </div>
