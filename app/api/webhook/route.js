@@ -48,7 +48,9 @@ export async function POST(request) {
     processedEvents.add(event.id);
     const session = event.data.object;
     const url = session.metadata?.websiteUrl;
-    const email = session.customer_email;
+    const email = session.metadata?.email
+      || session.customer_details?.email
+      || session.customer_email;
 
     console.log('[WEBHOOK] Session ID:', session.id);
     console.log('[WEBHOOK] Customer email:', email);
