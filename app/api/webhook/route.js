@@ -7,31 +7,42 @@ export const dynamic = 'force-dynamic';
 export const maxDuration = 300;
 
 // In-memory idempotency guard — prevents double-processing within the same
-// server instance. NOTE: This resets on Vercel cold starts. For production
-// scale, consider using a KV store (Vercel KV, Upstash Redis) keyed by
-// event.id with a 24h TTL. Stripe's built-in retry backoff (1h, 6h, 24h)
-// partially mitigates this since cold starts are frequent enough to process
-// each event at most once per instance.
+// server instance. Resets on Vercel cold starts.
 const processedEvents = new Set();
 
 export async function POST(request) {
-  // Derive the origin from the incoming request so the self-call always
-  // resolves to the correct deployment URL — NOT the NEXT_PUBLIC_BASE_URL
-  // env var which may still be "http://localhost:3000".
+  const startTime = Date.now();
+  console.log('[WEBHOOK] ========== INCOMING REQUEST ==========');
+  console.log('[WEBHOOK] Timestamp:', new Date().toISOString());
+
+  // Derive the origin from the incoming request
   const proto = request.headers.get('x-forwarded-proto') || 'https';
   const host = request.headers.get('host');
   const origin = `${proto}://${host}`;
+  console.log('[WEBHOOK] Derived origin:', origin);
+  console.log('[WEBHOOK] x-forwarded-proto:', proto);
+  console.log('[WEBHOOK] host header:', host);
 
   const body = await request.text();
   const sig = request.headers.get('stripe-signature');
+  console.log('[WEBHOOK] Body length:', body.length);
+  console.log('[WEBHOOK] Stripe signature present:', !!sig);
+  console.log('[WEBHOOK] Webhook secret present:', !!process.env.STRIPE_WEBHOOK_SECRET);
+  console.log('[WEBHOOK] Webhook secret prefix:', process.env.STRIPE_WEBHOOK_SECRET?.slice(0, 10) + '...');
 
   let event;
   try {
     event = stripe.webhooks.constructEvent(body, sig, process.env.STRIPE_WEBHOOK_SECRET);
+    console.log('[WEBHOOK] Signature VERIFIED successfully');
   } catch (err) {
-    console.error('Webhook signature verification failed:', err.message);
+    console.error('[WEBHOOK] Signature FAILED:', err.message);
     return NextResponse.json({ error: err.message }, { status: 400 });
   }
+
+  console.log('[WEBHOOK] Event type:', event.type);
+  console.log('[WEBHOOK] Event ID:', event.id);
+  console.log('[WEBHOOK] Already processed:', processedEvents.has(event.id));
+  console.log('[WEBHOOK] processedEvents size:', processedEvents.size);
 
   if (event.type === 'checkout.session.completed' && !processedEvents.has(event.id)) {
     processedEvents.add(event.id);
@@ -39,34 +50,59 @@ export async function POST(request) {
     const url = session.metadata?.websiteUrl;
     const email = session.customer_email;
 
+    console.log('[WEBHOOK] Session ID:', session.id);
+    console.log('[WEBHOOK] Customer email:', email);
+    console.log('[WEBHOOK] Website URL from metadata:', url);
+    console.log('[WEBHOOK] Payment status:', session.payment_status);
+    console.log('[WEBHOOK] All metadata keys:', JSON.stringify(session.metadata));
+
     if (!url || !email) {
-      console.error('Webhook missing metadata:', { url, email, eventId: event.id });
+      console.error('[WEBHOOK] MISSING DATA — url:', url, 'email:', email, 'eventId:', event.id);
       return NextResponse.json({ received: true });
     }
 
-    // after() runs once the 200 is sent, keeping the lambda alive until the
-    // report fetch completes — prevents Stripe retries without abandoning the job.
+    const reportUrl = `${origin}/api/report`;
+    console.log('[WEBHOOK] Will trigger report at:', reportUrl);
+    console.log('[WEBHOOK] Registering after() callback now...');
+
     after(async () => {
+      const afterStart = Date.now();
+      console.log('[WEBHOOK:AFTER] ===== after() callback STARTED =====');
+      console.log('[WEBHOOK:AFTER] Time since webhook start:', afterStart - startTime, 'ms');
+      console.log('[WEBHOOK:AFTER] Calling:', reportUrl);
       try {
-        const reportUrl = `${origin}/api/report`;
-        console.log('Triggering report generation:', reportUrl, '| email:', email, '| url:', url);
         const res = await fetch(reportUrl, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ url, email })
         });
+        const elapsed = Date.now() - afterStart;
+        console.log('[WEBHOOK:AFTER] Response status:', res.status);
+        console.log('[WEBHOOK:AFTER] Response elapsed:', elapsed, 'ms');
         if (!res.ok) {
           const errText = await res.text();
-          console.error('Report generation failed:', res.status, errText, '| email:', email, '| url:', url);
+          console.error('[WEBHOOK:AFTER] REPORT FAILED:', res.status, errText);
         } else {
-          console.log('Report generation succeeded for:', email);
+          console.log('[WEBHOOK:AFTER] REPORT SUCCESS for:', email);
         }
       } catch (err) {
-        console.error('Report generation error:', err.message, '| email:', email, '| url:', url);
+        const elapsed = Date.now() - afterStart;
+        console.error('[WEBHOOK:AFTER] FETCH ERROR after', elapsed, 'ms:', err.message);
+        console.error('[WEBHOOK:AFTER] Error name:', err.name);
+        console.error('[WEBHOOK:AFTER] Error cause:', err.cause);
       }
+      console.log('[WEBHOOK:AFTER] ===== after() callback ENDED =====');
     });
+
+    console.log('[WEBHOOK] after() registered, returning 200 now');
+  } else if (event.type !== 'checkout.session.completed') {
+    console.log('[WEBHOOK] IGNORED — event type is not checkout.session.completed');
+  } else {
+    console.log('[WEBHOOK] SKIPPED — event already processed (duplicate)');
   }
 
-  // Always return 200 immediately so Stripe does not retry
+  const elapsed = Date.now() - startTime;
+  console.log('[WEBHOOK] Returning 200 after', elapsed, 'ms');
+  console.log('[WEBHOOK] ========== END REQUEST ==========');
   return NextResponse.json({ received: true });
 }

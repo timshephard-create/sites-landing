@@ -223,13 +223,21 @@ function formatHomepageSignals(signals) {
 }
 
 export async function POST(request) {
+  const reportStart = Date.now();
+  console.log('[REPORT] ========== REPORT GENERATION STARTED ==========');
+  console.log('[REPORT] Timestamp:', new Date().toISOString());
+
   const { url, email } = await request.json();
+  console.log('[REPORT] URL:', url);
+  console.log('[REPORT] Email:', email);
 
   // Server-side validation
   if (!url || !url.startsWith('http')) {
+    console.error('[REPORT] REJECTED — invalid URL');
     return NextResponse.json({ error: 'Invalid URL' }, { status: 400 });
   }
   if (!email || !email.includes('@')) {
+    console.error('[REPORT] REJECTED — invalid email');
     return NextResponse.json({ error: 'Invalid email' }, { status: 400 });
   }
 
@@ -377,27 +385,51 @@ ${subpageSignalsSummary || 'No subpage signals extracted'}
 ${combinedContent}`;
 
   // Run audit and mockup generation in parallel
+  console.log('[REPORT] Pages crawled:', Object.keys(siteData).join(', '));
+  console.log('[REPORT] Starting AI generation (report + mockup in parallel)...');
+  const aiStart = Date.now();
+
   const [reportResult, mockupResult] = await Promise.allSettled([
     generateReport(url, fullPromptContent, Object.keys(siteData)),
     generateMockup(url, siteData['homepage'] || '', allPageSignals['homepage'] || {})
   ]);
+
+  console.log('[REPORT] AI generation completed in', Date.now() - aiStart, 'ms');
+  console.log('[REPORT] Report result:', reportResult.status, reportResult.status === 'rejected' ? reportResult.reason?.message : '');
+  console.log('[REPORT] Mockup result:', mockupResult.status, mockupResult.status === 'rejected' ? mockupResult.reason?.message : '');
 
   const report = reportResult.status === 'fulfilled' ? reportResult.value : null;
   const mockupHtml = mockupResult.status === 'fulfilled' ? mockupResult.value : null;
 
   if (!report) {
     const reason = reportResult.status === 'rejected' ? reportResult.reason?.message : 'Unknown error';
-    console.error('Report generation failed:', reason);
+    console.error('[REPORT] FAILED — no report generated:', reason);
     return NextResponse.json({ error: 'Report generation failed' }, { status: 500 });
   }
+
+  console.log('[REPORT] Report score:', report.score, '| Grade:', report.grade, '| Sections:', report.sections?.length);
 
   // Screenshot the mockup
   let mockupImageData = null;
   if (mockupHtml) {
+    console.log('[REPORT] Taking mockup screenshot...');
     mockupImageData = await screenshotHtml(mockupHtml);
+    console.log('[REPORT] Screenshot result:', mockupImageData ? 'success' : 'failed');
+  } else {
+    console.log('[REPORT] No mockup HTML generated, skipping screenshot');
   }
 
-  await sendReportEmail(email, url, report, mockupImageData);
+  console.log('[REPORT] Sending email to:', email);
+  try {
+    await sendReportEmail(email, url, report, mockupImageData);
+    console.log('[REPORT] Email sent successfully');
+  } catch (emailErr) {
+    console.error('[REPORT] EMAIL FAILED:', emailErr.message);
+    throw emailErr;
+  }
+
+  const totalTime = Date.now() - reportStart;
+  console.log('[REPORT] ========== COMPLETED in', totalTime, 'ms ==========');
   return NextResponse.json({ success: true });
 }
 
