@@ -204,7 +204,7 @@ export default function Home() {
         {step === 'loading' && (
           <div style={{ textAlign: 'center', padding: '3rem' }}>
             <div style={{ width: '40px', height: '40px', border: '3px solid #e8e4df', borderTopColor: '#C8522A', borderRadius: '50%', animation: 'spin 0.8s linear infinite', margin: '0 auto 1.5rem' }} />
-            <p style={{ color: '#4A4540', fontSize: '0.95rem' }}>Analyzing your site — this takes about 20 seconds...</p>
+            <p style={{ color: '#4A4540', fontSize: '0.95rem' }}>Analyzing your site — hang tight, this usually takes 30–60 seconds...</p>
             <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
           </div>
         )}

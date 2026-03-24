@@ -1,24 +1,155 @@
 export const maxDuration = 300;
 
+/**
+ * Extract signal-rich metadata from raw HTML before stripping tags.
+ * Returns structured signals for the AI prompt.
+ */
+function extractSignals(html, pageUrl) {
+  const signals = {};
+
+  // Meta title
+  const titleMatch = html.match(/<title[^>]*>([\s\S]*?)<\/title>/i);
+  signals.metaTitle = titleMatch ? titleMatch[1].replace(/\s+/g, ' ').trim() : null;
+
+  // Meta description
+  const descMatch = html.match(/<meta[^>]*name=["']description["'][^>]*content=["']([^"']+)["']/i)
+    || html.match(/<meta[^>]*content=["']([^"']+)["'][^>]*name=["']description["']/i);
+  signals.metaDescription = descMatch ? descMatch[1].trim() : null;
+
+  // OG tags
+  const ogTitle = html.match(/<meta[^>]*property=["']og:title["'][^>]*content=["']([^"']+)["']/i);
+  const ogDesc = html.match(/<meta[^>]*property=["']og:description["'][^>]*content=["']([^"']+)["']/i);
+  const ogImage = html.match(/<meta[^>]*property=["']og:image["'][^>]*content=["']([^"']+)["']/i);
+  signals.ogTitle = ogTitle ? ogTitle[1].trim() : null;
+  signals.ogDescription = ogDesc ? ogDesc[1].trim() : null;
+  signals.hasOgImage = !!ogImage;
+
+  // Viewport meta (mobile-readiness indicator)
+  signals.hasViewport = /<meta[^>]*name=["']viewport["']/i.test(html);
+
+  // Schema/structured data
+  signals.hasSchemaMarkup = /<script[^>]*type=["']application\/ld\+json["'][^>]*>/i.test(html);
+  if (signals.hasSchemaMarkup) {
+    const schemaMatches = html.match(/<script[^>]*type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi);
+    if (schemaMatches) {
+      signals.schemaTypes = schemaMatches.map(m => {
+        try {
+          const json = JSON.parse(m.replace(/<script[^>]*>|<\/script>/gi, ''));
+          return json['@type'] || null;
+        } catch { return null; }
+      }).filter(Boolean);
+    }
+  }
+
+  // Platform detection
+  const platformIndicators = [
+    { name: 'WordPress', pattern: /wp-content|wp-includes|wordpress/i },
+    { name: 'Squarespace', pattern: /squarespace\.com|squarespace-cdn/i },
+    { name: 'Wix', pattern: /wix\.com|wixsite\.com|parastorage\.com/i },
+    { name: 'Shopify', pattern: /shopify\.com|cdn\.shopify/i },
+    { name: 'Webflow', pattern: /webflow\.com|assets\.website-files\.com/i },
+    { name: 'GoDaddy', pattern: /godaddy\.com|secureserver\.net/i },
+    { name: 'Weebly', pattern: /weebly\.com/i },
+  ];
+  signals.platform = null;
+  for (const { name, pattern } of platformIndicators) {
+    if (pattern.test(html)) {
+      signals.platform = name;
+      break;
+    }
+  }
+
+  // Footer content (copyright year, branding)
+  const footerMatch = html.match(/<footer[^>]*>([\s\S]*?)<\/footer>/i);
+  if (footerMatch) {
+    signals.footerText = footerMatch[1]
+      .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '')
+      .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '')
+      .replace(/<[^>]*>/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim()
+      .slice(0, 500);
+  }
+
+  // Copyright year
+  const yearMatch = html.match(/©\s*(\d{4})|copyright\s*(\d{4})/i);
+  signals.copyrightYear = yearMatch ? (yearMatch[1] || yearMatch[2]) : null;
+
+  // SSL check (based on URL, not HTML)
+  signals.isHttps = pageUrl?.startsWith('https://') || false;
+
+  // Social links
+  const socialPatterns = ['facebook.com', 'instagram.com', 'twitter.com', 'x.com', 'linkedin.com', 'youtube.com', 'tiktok.com', 'yelp.com'];
+  signals.socialLinks = socialPatterns.filter(s => html.toLowerCase().includes(s));
+
+  // Phone number detection
+  const phoneMatch = html.match(/(?:tel:|href=["']tel:)([^"'<]+)/i) || html.match(/(\(?\d{3}\)?[\s.-]\d{3}[\s.-]\d{4})/);
+  signals.hasPhoneNumber = !!phoneMatch;
+
+  // Image alt text audit (sample)
+  const images = html.match(/<img[^>]*>/gi) || [];
+  const imagesWithAlt = images.filter(img => /alt=["'][^"']+["']/i.test(img));
+  signals.totalImages = images.length;
+  signals.imagesWithAlt = imagesWithAlt.length;
+
+  // H1 tags
+  const h1Match = html.match(/<h1[^>]*>([\s\S]*?)<\/h1>/i);
+  signals.h1Text = h1Match ? h1Match[1].replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim().slice(0, 200) : null;
+
+  // Navigation structure
+  const navMatch = html.match(/<nav[^>]*>([\s\S]*?)<\/nav>/i);
+  if (navMatch) {
+    const navLinks = navMatch[1].match(/href=["']([^"']+)["'][^>]*>([^<]*)/gi) || [];
+    signals.navItems = navLinks.slice(0, 10).map(l => {
+      const text = l.replace(/<[^>]*>/g, '').replace(/href=["'][^"']+["']/g, '').trim();
+      return text;
+    }).filter(Boolean);
+  }
+
+  return signals;
+}
+
+/**
+ * Clean HTML to plain text for body content analysis.
+ */
+function cleanHtml(html, maxLength = 2000) {
+  return html
+    .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '')
+    .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '')
+    .replace(/<[^>]*>/g, ' ')
+    .replace(/\s+/g, ' ')
+    .replace(/[^\x20-\x7E]/g, '')
+    .trim()
+    .slice(0, maxLength);
+}
+
 export async function POST(request) {
   const { url, email } = await request.json();
+
+  // Server-side validation
+  if (!url || !url.startsWith('http')) {
+    return Response.json({ error: 'Invalid URL' }, { status: 400 });
+  }
+  if (!email || !email.includes('@')) {
+    return Response.json({ error: 'Invalid email' }, { status: 400 });
+  }
 
   const fetchPage = async (pageUrl) => {
     try {
       const res = await fetch(pageUrl, {
-        headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36' },
+        headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36' },
+        redirect: 'follow',
         signal: AbortSignal.timeout(8000)
       });
+      if (!res.ok) return { html: '', clean: '', signals: {} };
       const html = await res.text();
-      return html
-        .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '')
-        .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '')
-        .replace(/<[^>]*>/g, ' ')
-        .replace(/\s+/g, ' ')
-        .replace(/[^\x20-\x7E]/g, '')
-        .slice(0, 2000);
+      return {
+        html,
+        clean: cleanHtml(html, 2000),
+        signals: extractSignals(html, pageUrl)
+      };
     } catch(e) {
-      return '';
+      return { html: '', clean: '', signals: {} };
     }
   };
 
@@ -29,7 +160,7 @@ export async function POST(request) {
     while ((match = linkRegex.exec(html)) !== null) {
       try {
         const link = new URL(match[1], baseUrl).href;
-        if (link.startsWith(baseUrl) && !link.includes('#') && !link.match(/\.(jpg|jpeg|png|gif|pdf|zip)/i)) {
+        if (link.startsWith(baseUrl) && !link.includes('#') && !link.match(/\.(jpg|jpeg|png|gif|pdf|zip|svg|webp|css|js)/i)) {
           matches.push(link);
         }
       } catch(e) {}
@@ -38,23 +169,16 @@ export async function POST(request) {
   };
 
   let siteData = {};
-  let rawHomepage = '';
+  let homepageSignals = {};
+  let rawHomepageHtml = '';
 
   try {
-    const homeRes = await fetch(url, {
-      headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36' },
-      signal: AbortSignal.timeout(8000)
-    });
-    rawHomepage = await homeRes.text();
-    siteData['homepage'] = rawHomepage
-      .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '')
-      .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '')
-      .replace(/<[^>]*>/g, ' ')
-      .replace(/\s+/g, ' ')
-      .replace(/[^\x20-\x7E]/g, '')
-      .slice(0, 2000);
+    const homePage = await fetchPage(url);
+    rawHomepageHtml = homePage.html;
+    siteData['homepage'] = homePage.clean;
+    homepageSignals = homePage.signals;
 
-    const allLinks = extractLinks(rawHomepage, url);
+    const allLinks = extractLinks(rawHomepageHtml, url);
     const priorityKeywords = ['service', 'about', 'contact', 'pricing', 'price', 'team', 'staff', 'booking', 'appointment', 'menu'];
 
     const priorityLinks = priorityKeywords
@@ -63,27 +187,48 @@ export async function POST(request) {
       .filter((v, i, a) => a.indexOf(v) === i)
       .slice(0, 4);
 
-    for (const link of priorityLinks) {
-      const pageName = new URL(link).pathname.replace(/\//g, '') || 'page';
-      const content = await fetchPage(link);
-      if (content) siteData[pageName] = content;
+    // Fetch priority pages in parallel
+    const pageResults = await Promise.allSettled(
+      priorityLinks.map(async (link) => {
+        const pageName = new URL(link).pathname.replace(/\//g, '') || 'page';
+        const content = await fetchPage(link);
+        return { pageName, content };
+      })
+    );
+
+    for (const result of pageResults) {
+      if (result.status === 'fulfilled' && result.value.content.clean) {
+        siteData[result.value.pageName] = result.value.content.clean;
+      }
     }
   } catch(e) {
     siteData['homepage'] = 'Could not fetch site.';
   }
 
+  // Build enriched content for AI — includes structured signals
+  const signalsSummary = formatSignals(homepageSignals);
+
   const combinedContent = Object.entries(siteData)
     .map(([page, content]) => `=== ${page.toUpperCase()} ===\n${content}`)
     .join('\n\n');
 
-  const systemPrompt = `You are a website advisor helping local business owners understand how their website is performing. Your tone is that of a knowledgeable friend — honest, clear, never condescending, never salesy. You have crawled multiple pages of their website and you are giving them a real, specific assessment based on what you actually found.
+  const fullPromptContent = `Website URL: ${url}
+Pages crawled: ${Object.keys(siteData).join(', ')}
+
+=== TECHNICAL SIGNALS (extracted from HTML) ===
+${signalsSummary}
+
+=== PAGE CONTENT ===
+${combinedContent}`;
+
+  const systemPrompt = `You are a website advisor helping local business owners understand how their website is performing. Your tone is that of a knowledgeable friend — honest, clear, never condescending, never salesy. You have crawled multiple pages of their website and have both the page content AND technical signals extracted from the HTML.
 
 Return a JSON object with this exact structure:
 {
   "score": number between 0-100,
   "grade": one of F, D, C, B, A,
   "industry": one or two word description of the business type e.g. medspa, plumber, restaurant, law firm,
-  "summary": one honest sentence about the overall site,
+  "summary": one honest sentence about the overall site — reference something specific you saw (their business name, headline, a missing element, or their platform),
   "issues": array of 4-5 objects, each with { "title": string, "description": string, "impact": one of high/medium/low }
 }
 
@@ -94,7 +239,8 @@ Scoring guide:
 - Below 40: Significant issues that need immediate attention
 
 For each issue:
-- Be specific to what you actually saw on their pages
+- Be specific to what you actually saw on their pages. Reference actual page names, headlines, copy, or elements you found (or didn't find)
+- Use the technical signals: meta title, meta description presence, schema markup, platform, viewport, SSL, image alt text stats, social links, copyright year
 - high impact means it is likely costing them customers or revenue right now
 - medium impact means it is reducing their effectiveness
 - low impact means it would improve the site but is not urgent
@@ -102,10 +248,10 @@ For each issue:
 - Describe the cost of inaction, not just the problem
 
 Rules:
-- Base everything on the actual content you were given
+- Base everything on the actual content and technical signals you were given
 - If pricing was found on a subpage, note that it requires extra clicks to find
 - If contact info was found, note whether it is prominent or buried
-- Never fabricate issues that are not supported by the content
+- Never fabricate issues that are not supported by the content or signals
 - Never use: stunning, seamless, leverage, optimize, solutions
 - Return only valid JSON, no markdown, no preamble`;
 
@@ -123,15 +269,28 @@ Rules:
         system: systemPrompt,
         messages: [{
           role: 'user',
-          content: 'Website URL: ' + url + '\nPages crawled: ' + Object.keys(siteData).join(', ') + '\n\n' + combinedContent
+          content: fullPromptContent
         }]
       })
     });
 
+    if (!res.ok) {
+      const errText = await res.text();
+      console.error('Anthropic API error:', res.status, errText);
+      return Response.json({ error: 'Audit analysis failed. Please try again.' }, { status: 502 });
+    }
+
     const data = await res.json();
     const text = data.content?.[0]?.text || '{}';
     const clean = text.replace(/```json|```/g, '').trim();
-    const audit = JSON.parse(clean);
+
+    let audit;
+    try {
+      audit = JSON.parse(clean);
+    } catch (parseErr) {
+      console.error('JSON parse error:', parseErr.message, 'Raw:', text.slice(0, 500));
+      return Response.json({ error: 'Audit failed — unexpected response format' }, { status: 500 });
+    }
 
     let teaserImageUrl = null;
     if (audit.industry) {
@@ -152,10 +311,12 @@ Rules:
             }]
           })
         });
-        const mockupData = await mockupRes.json();
-        const mockupHtml = mockupData.content?.[0]?.text || '';
-        if (mockupHtml) {
-          teaserImageUrl = await screenshotHtml(mockupHtml);
+        if (mockupRes.ok) {
+          const mockupData = await mockupRes.json();
+          const mockupHtml = mockupData.content?.[0]?.text || '';
+          if (mockupHtml) {
+            teaserImageUrl = await screenshotHtml(mockupHtml);
+          }
         }
       } catch(e) {
         console.error('Teaser mockup error:', e);
@@ -171,14 +332,17 @@ Rules:
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ email, websiteUrl: url })
         });
-        const coData = await coRes.json();
-        checkoutUrl = coData.url || null;
+        if (coRes.ok) {
+          const coData = await coRes.json();
+          checkoutUrl = coData.url || null;
+        }
       } catch (e) {
         console.error('Checkout session creation error:', e);
       }
     }
 
     if (email) {
+      // Add to Brevo CRM — log failures but don't block
       await fetch('https://api.brevo.com/v3/contacts', {
         method: 'POST',
         headers: {
@@ -191,16 +355,79 @@ Rules:
           listIds: [2],
           updateEnabled: true
         })
-      }).catch(() => {});
+      }).catch((e) => {
+        console.error('Brevo contact sync error:', e);
+      });
 
-      await sendAuditEmail(email, url, audit, teaserImageUrl, checkoutUrl).catch(() => {});
+      // Send email — log failures
+      try {
+        await sendAuditEmail(email, url, audit, teaserImageUrl, checkoutUrl);
+      } catch (e) {
+        console.error('Audit email send failed:', e.message, '| email:', email, '| url:', url);
+      }
     }
 
     return Response.json({ audit, pagesCrawled: Object.keys(siteData) });
   } catch(err) {
-    console.error(err);
+    console.error('Audit error:', err);
     return Response.json({ error: 'Audit failed' }, { status: 500 });
   }
+}
+
+/**
+ * Format extracted signals into a readable summary for the AI prompt.
+ */
+function formatSignals(signals) {
+  const lines = [];
+
+  if (signals.metaTitle) lines.push(`Meta title: "${signals.metaTitle}"`);
+  else lines.push('Meta title: MISSING');
+
+  if (signals.metaDescription) lines.push(`Meta description: "${signals.metaDescription}"`);
+  else lines.push('Meta description: MISSING');
+
+  if (signals.h1Text) lines.push(`H1 headline: "${signals.h1Text}"`);
+  else lines.push('H1 headline: MISSING');
+
+  lines.push(`HTTPS: ${signals.isHttps ? 'Yes' : 'No — site is not using SSL'}`);
+  lines.push(`Mobile viewport meta: ${signals.hasViewport ? 'Present' : 'MISSING — may not be mobile-friendly'}`);
+
+  if (signals.platform) lines.push(`Platform detected: ${signals.platform}`);
+  else lines.push('Platform: Not detected (possibly custom-built)');
+
+  lines.push(`Schema/structured data: ${signals.hasSchemaMarkup ? `Yes (types: ${signals.schemaTypes?.join(', ') || 'unknown'})` : 'NONE found'}`);
+
+  if (signals.hasOgImage) lines.push('Open Graph image: Present');
+  else lines.push('Open Graph image: MISSING (social sharing will show no preview)');
+
+  if (signals.totalImages > 0) {
+    lines.push(`Images: ${signals.totalImages} found, ${signals.imagesWithAlt} have alt text (${Math.round(signals.imagesWithAlt / signals.totalImages * 100)}%)`);
+  }
+
+  lines.push(`Phone number visible: ${signals.hasPhoneNumber ? 'Yes' : 'Not found in HTML'}`);
+
+  if (signals.socialLinks?.length > 0) {
+    lines.push(`Social links: ${signals.socialLinks.join(', ')}`);
+  } else {
+    lines.push('Social links: None found');
+  }
+
+  if (signals.copyrightYear) {
+    const currentYear = new Date().getFullYear();
+    if (parseInt(signals.copyrightYear) < currentYear) {
+      lines.push(`Copyright year: ${signals.copyrightYear} (OUTDATED — currently ${currentYear})`);
+    } else {
+      lines.push(`Copyright year: ${signals.copyrightYear}`);
+    }
+  }
+
+  if (signals.footerText) lines.push(`Footer content: "${signals.footerText.slice(0, 200)}"`);
+
+  if (signals.navItems?.length > 0) {
+    lines.push(`Navigation items: ${signals.navItems.join(', ')}`);
+  }
+
+  return lines.join('\n');
 }
 
 async function screenshotHtml(html) {
@@ -222,7 +449,7 @@ async function screenshotHtml(html) {
     const screenshotUrl = `https://api.screenshotone.com/take?${params.toString()}`;
     const res = await fetch(screenshotUrl);
     if (!res.ok) {
-      console.error('ScreenshotOne error:', await res.text());
+      console.error('ScreenshotOne error:', res.status);
       return null;
     }
     await res.arrayBuffer();
@@ -244,6 +471,7 @@ async function sendAuditEmail(email, url, audit, teaserImageUrl, checkoutUrl) {
     },
     body: JSON.stringify({
       sender: { name: 'Tim Shephard', email: 'tim@timshephard.co' },
+      replyTo: { name: 'Tim Shephard', email: 'tim@timshephard.co' },
       to: [{ email }],
       subject: `Your free website audit — ${url}`,
       htmlContent
@@ -306,7 +534,12 @@ function buildAuditEmailHTML(url, audit, teaserImageUrl, checkoutUrl) {
 
   const ctaUrl = checkoutUrl || `${process.env.NEXT_PUBLIC_BASE_URL}`;
 
+  // Hidden preheader text for email client previews
+  const preheader = `Your site scored ${audit.score}/100 (${audit.grade}). Here's what we found.`;
+  const preheaderHTML = `<div style="display:none;max-height:0;overflow:hidden;mso-hide:all;">${preheader}</div>`;
+
   return `
+  ${preheaderHTML}
   <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#F7F3EE;">
     <tr>
       <td align="center" style="padding:32px 16px;">
@@ -368,7 +601,7 @@ function buildAuditEmailHTML(url, audit, teaserImageUrl, checkoutUrl) {
                         </td>
                       </tr>
                     </table>
-                    <p style="margin:0;font-family:Georgia,serif;font-size:13px;color:rgba(255,255,255,0.35);">Rather just talk? calendly.com/tim-shephard/free-15-min-website-call</p>
+                    <p style="margin:0;font-family:Georgia,serif;font-size:13px;color:rgba(255,255,255,0.35);">Rather just talk? <a href="https://calendly.com/tim-shephard/free-15-min-website-call" style="color:rgba(255,255,255,0.5);text-decoration:underline;">Book a free 15-min call</a></p>
                   </td>
                 </tr>
               </table>
