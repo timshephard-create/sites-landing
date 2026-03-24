@@ -476,7 +476,7 @@ Rules:
       'anthropic-version': '2023-06-01'
     },
     body: JSON.stringify({
-      model: 'claude-opus-4-5-20250520',
+      model: 'claude-opus-4-5',
       max_tokens: 4000,
       system: systemPrompt,
       messages: [{
@@ -510,7 +510,7 @@ async function generateMockup(url, homepageContent, signals) {
       'anthropic-version': '2023-06-01'
     },
     body: JSON.stringify({
-      model: 'claude-opus-4-5-20250520',
+      model: 'claude-opus-4-5',
       max_tokens: 4000,
       system: `You are an expert web designer. Based on the business content provided, generate a single clean, modern, high-converting homepage design as a complete self-contained HTML file.
 
