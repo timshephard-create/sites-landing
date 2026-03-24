@@ -15,6 +15,13 @@ export const maxDuration = 300;
 const processedEvents = new Set();
 
 export async function POST(request) {
+  // Derive the origin from the incoming request so the self-call always
+  // resolves to the correct deployment URL — NOT the NEXT_PUBLIC_BASE_URL
+  // env var which may still be "http://localhost:3000".
+  const proto = request.headers.get('x-forwarded-proto') || 'https';
+  const host = request.headers.get('host');
+  const origin = `${proto}://${host}`;
+
   const body = await request.text();
   const sig = request.headers.get('stripe-signature');
 
@@ -41,7 +48,9 @@ export async function POST(request) {
     // report fetch completes — prevents Stripe retries without abandoning the job.
     after(async () => {
       try {
-        const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/report`, {
+        const reportUrl = `${origin}/api/report`;
+        console.log('Triggering report generation:', reportUrl, '| email:', email, '| url:', url);
+        const res = await fetch(reportUrl, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ url, email })
@@ -49,6 +58,8 @@ export async function POST(request) {
         if (!res.ok) {
           const errText = await res.text();
           console.error('Report generation failed:', res.status, errText, '| email:', email, '| url:', url);
+        } else {
+          console.log('Report generation succeeded for:', email);
         }
       } catch (err) {
         console.error('Report generation error:', err.message, '| email:', email, '| url:', url);

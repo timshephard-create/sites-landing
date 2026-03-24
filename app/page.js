@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 
 export default function Home() {
   const [url, setUrl] = useState('');
@@ -12,6 +12,7 @@ export default function Home() {
   const [exitIntentDismissed, setExitIntentDismissed] = useState(false);
   const [stickyDismissed, setStickyDismissed] = useState(false);
   const [showSticky, setShowSticky] = useState(false);
+  const auditInFlight = useRef(false);
 
   useEffect(() => {
     const handleScroll = () => setShowSticky(window.scrollY > 300);
@@ -38,10 +39,12 @@ export default function Home() {
   };
 
   const handleAudit = async () => {
+    if (auditInFlight.current) return; // Prevent double-submit
     if (!email || !email.includes('@')) {
       setError('Please enter a valid email address');
       return;
     }
+    auditInFlight.current = true;
     setError('');
     setStep('loading');
     try {
@@ -58,6 +61,8 @@ export default function Home() {
     } catch(e) {
       setError('Something went wrong. Please try again.');
       setStep('email');
+    } finally {
+      auditInFlight.current = false;
     }
   };
 

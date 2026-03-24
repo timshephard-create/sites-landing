@@ -313,7 +313,9 @@ Rules:
         });
         if (mockupRes.ok) {
           const mockupData = await mockupRes.json();
-          const mockupHtml = mockupData.content?.[0]?.text || '';
+          const rawMockup = mockupData.content?.[0]?.text || '';
+          // Strip markdown code fences Claude often wraps around HTML
+          const mockupHtml = rawMockup.replace(/```html|```/g, '').trim();
           if (mockupHtml) {
             teaserImageUrl = await screenshotHtml(mockupHtml);
           }
