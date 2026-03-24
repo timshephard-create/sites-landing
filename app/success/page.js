@@ -11,14 +11,15 @@ export default function Success() {
         <p style={{ fontSize: '1.05rem', color: '#4A4540', lineHeight: 1.8, marginBottom: '2rem', fontWeight: 300 }}>
           Your full website audit report is being generated and will be delivered to your inbox within 2 minutes.
         </p>
-        <p style={{ fontSize: '0.85rem', color: '#9A9490' }}>
+        <p style={{ fontSize: '0.85rem', color: '#9A9490', lineHeight: 1.8 }}>
           Didn&apos;t get it? Check your spam folder or{' '}
           <button
             onClick={() => { window.location.href = 'mailto:tim@timshephard.co'; }}
             style={{ background: 'none', border: 'none', color: '#8B4513', textDecoration: 'underline', cursor: 'pointer', padding: 0, font: 'inherit' }}
           >
             email me directly
-          </button>.
+          </button>{' '}
+          at <span style={{ color: '#4A4540', userSelect: 'all' }}>tim@timshephard.co</span>
         </p>
         <a href="/" style={{ display: 'inline-block', marginTop: '2rem', color: '#C8522A', fontSize: '0.9rem' }}>&#8592; Back to home</a>
       </div>
