@@ -12,7 +12,10 @@ export default function Home() {
   const [exitIntentDismissed, setExitIntentDismissed] = useState(false);
   const [stickyDismissed, setStickyDismissed] = useState(false);
   const [showSticky, setShowSticky] = useState(false);
+  const [turnstileToken, setTurnstileToken] = useState('');
   const auditInFlight = useRef(false);
+  const turnstileRef = useRef(null);
+  const turnstileWidgetId = useRef(null);
 
   useEffect(() => {
     const handleScroll = () => setShowSticky(window.scrollY > 300);
@@ -29,6 +32,37 @@ export default function Home() {
     return () => document.removeEventListener('mousemove', handleMouseMove);
   }, [step, exitIntentShown, exitIntentDismissed]);
 
+  useEffect(() => {
+    if (step !== 'email') {
+      if (turnstileWidgetId.current !== null && window.turnstile) {
+        window.turnstile.remove(turnstileWidgetId.current);
+        turnstileWidgetId.current = null;
+        setTurnstileToken('');
+      }
+      return;
+    }
+
+    const renderWidget = () => {
+      if (turnstileWidgetId.current !== null || !turnstileRef.current) return;
+      turnstileWidgetId.current = window.turnstile.render(turnstileRef.current, {
+        sitekey: process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY,
+        callback: (token) => setTurnstileToken(token),
+        'expired-callback': () => setTurnstileToken(''),
+        'error-callback': () => setTurnstileToken(''),
+      });
+    };
+
+    if (window.turnstile) {
+      renderWidget();
+    } else {
+      const script = document.createElement('script');
+      script.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js';
+      script.async = true;
+      script.onload = renderWidget;
+      document.head.appendChild(script);
+    }
+  }, [step]);
+
   const handleUrlSubmit = () => {
     if (!url || !url.startsWith('http')) {
       setError('Please enter a valid URL starting with http:// or https://');
@@ -44,6 +78,10 @@ export default function Home() {
       setError('Please enter a valid email address');
       return;
     }
+    if (!turnstileToken) {
+      setError('Please complete the security check above.');
+      return;
+    }
     auditInFlight.current = true;
     setError('');
     setStep('loading');
@@ -51,7 +89,7 @@ export default function Home() {
       const res = await fetch('/api/audit', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ url, email })
+        body: JSON.stringify({ url, email, turnstileToken })
       });
       const data = await res.json();
       if (data.error) throw new Error(data.error);
@@ -59,7 +97,7 @@ export default function Home() {
       setPagesCrawled(data.pagesCrawled || []);
       setStep('results');
     } catch(e) {
-      setError('Something went wrong. Please try again.');
+      setError(e.message || 'Something went wrong. Please try again.');
       setStep('email');
     } finally {
       auditInFlight.current = false;
@@ -201,6 +239,7 @@ export default function Home() {
                 Run audit
               </button>
             </div>
+            <div ref={turnstileRef} style={{ marginTop: '1rem' }} />
             {error && <p style={{ color: '#993C1D', fontSize: '0.85rem', marginTop: '0.5rem' }}>{error}</p>}
             <p style={{ fontSize: '0.75rem', color: '#9A9490', marginTop: '1rem' }}>Auditing: {url} · <button onClick={() => setStep('idle')} style={{ background: 'none', border: 'none', color: '#C8522A', cursor: 'pointer', fontSize: '0.75rem', padding: 0 }}>Change</button></p>
           </div>

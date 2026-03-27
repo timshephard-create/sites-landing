@@ -124,7 +124,7 @@ function cleanHtml(html, maxLength = 2000) {
 }
 
 export async function POST(request) {
-  const { url, email } = await request.json();
+  const { url, email, turnstileToken } = await request.json();
 
   // Server-side validation
   if (!url || !url.startsWith('http')) {
@@ -132,6 +132,40 @@ export async function POST(request) {
   }
   if (!email || !email.includes('@')) {
     return Response.json({ error: 'Invalid email' }, { status: 400 });
+  }
+
+  // Verify Turnstile CAPTCHA
+  if (!turnstileToken) {
+    return Response.json({ error: 'Security check required. Please complete the CAPTCHA.' }, { status: 400 });
+  }
+  try {
+    const verifyForm = new URLSearchParams();
+    verifyForm.append('secret', process.env.TURNSTILE_SECRET_KEY);
+    verifyForm.append('response', turnstileToken);
+    const verifyRes = await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', {
+      method: 'POST',
+      body: verifyForm,
+    });
+    const verifyData = await verifyRes.json();
+    if (!verifyData.success) {
+      return Response.json({ error: 'Security check failed. Please refresh and try again.' }, { status: 400 });
+    }
+  } catch (e) {
+    console.error('Turnstile verification error:', e);
+    return Response.json({ error: 'Security check failed. Please try again.' }, { status: 400 });
+  }
+
+  // Rate limit — check if email already received a free audit
+  try {
+    const contactRes = await fetch(`https://api.brevo.com/v3/contacts/${encodeURIComponent(email)}`, {
+      headers: { 'api-key': process.env.BREVO_API_KEY }
+    });
+    if (contactRes.ok) {
+      return Response.json({ error: "Looks like we already sent an audit to that email — check your inbox!" }, { status: 429 });
+    }
+  } catch (e) {
+    console.error('Brevo rate limit check error:', e);
+    // Proceed if check fails
   }
 
   const fetchPage = async (pageUrl) => {
