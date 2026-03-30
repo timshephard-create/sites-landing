@@ -156,16 +156,19 @@ export async function POST(request) {
   }
 
   // Rate limit — check if email already received a free audit
-  try {
-    const contactRes = await fetch(`https://api.brevo.com/v3/contacts/${encodeURIComponent(email)}`, {
-      headers: { 'api-key': process.env.BREVO_API_KEY }
-    });
-    if (contactRes.ok) {
-      return Response.json({ error: "Looks like we already sent an audit to that email — check your inbox!" }, { status: 429 });
+  // Bypass for test account
+  if (email !== 'tim.shephard@gmail.com') {
+    try {
+      const contactRes = await fetch(`https://api.brevo.com/v3/contacts/${encodeURIComponent(email)}`, {
+        headers: { 'api-key': process.env.BREVO_API_KEY }
+      });
+      if (contactRes.ok) {
+        return Response.json({ error: "Looks like we already sent an audit to that email — check your inbox!" }, { status: 429 });
+      }
+    } catch (e) {
+      console.error('Brevo rate limit check error:', e);
+      // Proceed if check fails
     }
-  } catch (e) {
-    console.error('Brevo rate limit check error:', e);
-    // Proceed if check fails
   }
 
   const fetchPage = async (pageUrl) => {
