@@ -80,7 +80,7 @@ export default function Home() {
       }, 30000);
       console.log('[PSI] Fetching score for:', url);
       const res = await fetch(
-        `https://www.googleapis.com/pagespeedonline/v5/runPagespeed?url=${encodeURIComponent(url)}&strategy=mobile`,
+        `/api/psi?url=${encodeURIComponent(url)}`,
         { signal: controller.signal }
       );
       clearTimeout(timeout);
