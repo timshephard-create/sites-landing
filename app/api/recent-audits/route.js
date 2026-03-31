@@ -91,8 +91,13 @@ export async function GET() {
 
     const data = await res.json();
 
-    // Expose field keys for one-time diagnosis — remove after confirming
+    // Expose sample values for one-time diagnosis — remove after confirming
     const _debugFields = data.records?.[0] ? Object.keys(data.records[0].fields) : [];
+    const _debugSample = (data.records || []).slice(0, 5).map(r => ({
+      businessName: r.fields.businessName,
+      instantlyStatus: r.fields.instantlyStatus,
+      website: r.fields.website,
+    }));
 
     const audits = (data.records || [])
       .map(record => {
@@ -111,7 +116,7 @@ export async function GET() {
       .filter(Boolean)
       .slice(0, 6); // Cap at 6 entries
 
-    return Response.json({ audits, _debugFields });
+    return Response.json({ audits, _debugFields, _debugSample });
   } catch (e) {
     console.error('[recent-audits] Error:', e.message);
     return Response.json({ audits: [] });
