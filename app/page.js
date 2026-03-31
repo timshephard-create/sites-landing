@@ -110,11 +110,18 @@ export default function Home() {
         'viewport',
         'meta-description',
       ];
+      const labelMap = {
+        'largest-contentful-paint': 'Page load time',
+        'interactive': 'Ready to use',
+        'speed-index': 'Visual load speed',
+        'first-contentful-paint': 'First content appears',
+        'total-blocking-time': 'Interaction delay',
+      };
       const issues = auditIds
-        .map(id => audits[id])
+        .map(id => audits[id] ? { ...audits[id], _id: id } : null)
         .filter(a => a && a.score !== null && a.score < 0.9 && a.displayValue)
         .slice(0, 3)
-        .map(a => ({ title: a.title, value: a.displayValue }));
+        .map(a => ({ title: labelMap[a._id] || a.title, value: a.displayValue }));
 
       console.log('[PSI] Score:', score, '| Issues:', issues);
       setPsiData({ score, issues });
@@ -296,7 +303,8 @@ export default function Home() {
                   <p style={{ fontFamily: 'Georgia, serif', fontSize: '1.4rem', fontWeight: 700, margin: '0 0 0.25rem', color: psiData.score >= 75 ? '#3B6D11' : psiData.score >= 50 ? '#854F0B' : '#993C1D' }}>
                     {psiData.score >= 75 ? 'Looking good' : psiData.score >= 50 ? 'Getting there' : 'Needs work'}
                   </p>
-                  <p style={{ fontSize: '0.85rem', color: '#9A9490', margin: 0, fontWeight: 300 }}>Mobile performance score</p>
+                  <p style={{ fontSize: '0.85rem', color: '#9A9490', margin: '0 0 0.4rem', fontWeight: 300 }}>Mobile performance score</p>
+                  <p style={{ fontSize: '0.82rem', color: '#9A9490', margin: 0, fontWeight: 300 }}>The average website loads in under 3 seconds.</p>
                 </div>
               </div>
               {psiData.issues.length > 0 && (
