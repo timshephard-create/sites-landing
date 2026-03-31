@@ -14,6 +14,7 @@ export default function Home() {
   const [showSticky, setShowSticky] = useState(false);
   const [turnstileToken, setTurnstileToken] = useState('');
   const [psiData, setPsiData] = useState(null);
+  const [recentAudits, setRecentAudits] = useState([]);
   const auditInFlight = useRef(false);
   const turnstileRef = useRef(null);
   const turnstileWidgetId = useRef(null);
@@ -22,6 +23,13 @@ export default function Home() {
     const handleScroll = () => setShowSticky(window.scrollY > 300);
     window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  useEffect(() => {
+    fetch('/api/recent-audits')
+      .then(r => r.json())
+      .then(d => { if (d.audits?.length) setRecentAudits(d.audits); })
+      .catch(() => {});
   }, []);
 
   useEffect(() => {
@@ -476,6 +484,39 @@ export default function Home() {
           </div>
         )}
       </section>
+
+      {/* RECENT AUDITS FEED */}
+      {recentAudits.length > 0 && (
+        <section style={{ padding: '3rem 2rem 4rem', maxWidth: '700px', margin: '0 auto' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '1.25rem' }}>
+            <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#3B6D11', display: 'inline-block', animation: 'pulse 2s ease-in-out infinite' }} />
+            <p style={{ fontSize: '0.75rem', fontWeight: 500, letterSpacing: '0.12em', textTransform: 'uppercase', color: '#9A9490', margin: 0 }}>Recent audits</p>
+          </div>
+          <style>{`@keyframes pulse { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.4; transform: scale(0.85); } }`}</style>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+            {recentAudits.map((a, i) => {
+              const score = a.opportunityScore;
+              const badge = score >= 70 ? { label: 'HOT', bg: '#FAECE7', color: '#993C1D' }
+                : score >= 40 ? { label: 'WARM', bg: '#FAEEDA', color: '#854F0B' }
+                : { label: 'LOW', bg: '#F0ECE8', color: '#9A9490' };
+              return (
+                <div key={i} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0.65rem 0.9rem', background: '#fff', border: '1px solid #e8e4df', borderRadius: '3px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', minWidth: 0 }}>
+                    <span style={{ fontSize: '0.88rem', color: '#1A1714', whiteSpace: 'nowrap' }}>{a.businessType}</span>
+                    {a.city && <span style={{ fontSize: '0.8rem', color: '#9A9490', whiteSpace: 'nowrap' }}>{a.city}</span>}
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexShrink: 0, marginLeft: '1rem' }}>
+                    {score !== null && (
+                      <span style={{ fontSize: '0.7rem', padding: '2px 7px', borderRadius: '2px', background: badge.bg, color: badge.color, fontWeight: 500, letterSpacing: '0.04em' }}>{badge.label}</span>
+                    )}
+                    <span style={{ fontSize: '0.78rem', color: '#C4BEB8', whiteSpace: 'nowrap' }}>{a.relativeTime}</span>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </section>
+      )}
 
       {/* WHAT YOU GET */}
       <section style={{ padding: '6rem 2rem', background: '#fff' }}>
