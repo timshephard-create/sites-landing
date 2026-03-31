@@ -267,13 +267,14 @@ export default function Home() {
       {/* AUDIT WIDGET */}
       <section id="audit" style={{ padding: '6rem 2rem', maxWidth: '700px', margin: '0 auto' }}>
         <p style={{ fontSize: '0.75rem', fontWeight: 500, letterSpacing: '0.12em', textTransform: 'uppercase', color: '#C8522A', marginBottom: '1rem' }}>Free website audit</p>
-        <h2 style={{ fontFamily: 'Georgia, serif', fontSize: 'clamp(2rem, 4vw, 3rem)', lineHeight: 1.2, marginBottom: '1rem' }}>See exactly what your website is — and isn't — doing for you.</h2>
+        <h2 style={{ fontFamily: 'Georgia, serif', fontSize: 'clamp(2rem, 4vw, 3rem)', lineHeight: 1.2, marginBottom: '1rem' }}>Most local business websites are losing customers every day. Is yours?</h2>
         <p style={{ fontSize: '1rem', color: '#4A4540', lineHeight: 1.8, marginBottom: '2.5rem', fontWeight: 300 }}>
           Enter your website URL and get an honest assessment in under a minute. No fluff, no generic advice — just a real look at what's working and what's costing you customers.
         </p>
 
         {step === 'idle' && (
           <div>
+            <p style={{ fontSize: '0.82rem', color: '#9A9490', lineHeight: 1.6, marginBottom: '1rem', fontWeight: 300 }}>57% of users won't recommend a business with a poorly designed mobile site. Here's how yours stacks up.</p>
             <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
               <input
                 value={url}
