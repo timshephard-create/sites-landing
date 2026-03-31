@@ -13,6 +13,7 @@ export default function Home() {
   const [stickyDismissed, setStickyDismissed] = useState(false);
   const [showSticky, setShowSticky] = useState(false);
   const [turnstileToken, setTurnstileToken] = useState('');
+  const [psiData, setPsiData] = useState(null);
   const auditInFlight = useRef(false);
   const turnstileRef = useRef(null);
   const turnstileWidgetId = useRef(null);
@@ -33,7 +34,7 @@ export default function Home() {
   }, [step, exitIntentShown, exitIntentDismissed]);
 
   useEffect(() => {
-    if (step !== 'email') {
+    if (step !== 'email' && step !== 'scored') {
       if (turnstileWidgetId.current !== null && window.turnstile) {
         window.turnstile.remove(turnstileWidgetId.current);
         turnstileWidgetId.current = null;
@@ -63,13 +64,51 @@ export default function Home() {
     }
   }, [step]);
 
-  const handleUrlSubmit = () => {
+  const handleUrlSubmit = async () => {
     if (!url || !url.startsWith('http')) {
       setError('Please enter a valid URL starting with http:// or https://');
       return;
     }
     setError('');
-    setStep('email');
+    setStep('scoring');
+
+    try {
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 8000);
+      const res = await fetch(
+        `https://www.googleapis.com/pagespeedonline/v5/runPagespeed?url=${encodeURIComponent(url)}&strategy=mobile`,
+        { signal: controller.signal }
+      );
+      clearTimeout(timeout);
+      if (!res.ok) throw new Error('PSI failed');
+      const data = await res.json();
+      const rawScore = data?.lighthouseResult?.categories?.performance?.score;
+      if (rawScore == null) throw new Error('No score');
+
+      const score = Math.round(rawScore * 100);
+      const audits = data.lighthouseResult.audits || {};
+      const auditIds = [
+        'largest-contentful-paint',
+        'interactive',
+        'speed-index',
+        'uses-optimized-images',
+        'render-blocking-resources',
+        'uses-text-compression',
+        'viewport',
+        'meta-description',
+      ];
+      const issues = auditIds
+        .map(id => audits[id])
+        .filter(a => a && a.score !== null && a.score < 0.9 && a.displayValue)
+        .slice(0, 3)
+        .map(a => ({ title: a.title, value: a.displayValue }));
+
+      setPsiData({ score, issues });
+      setStep('scored');
+    } catch (e) {
+      setPsiData(null);
+      setStep('email');
+    }
   };
 
   const handleAudit = async () => {
@@ -219,6 +258,64 @@ export default function Home() {
               </button>
             </div>
             {error && <p style={{ color: '#993C1D', fontSize: '0.85rem', marginTop: '0.5rem' }}>{error}</p>}
+          </div>
+        )}
+
+        {step === 'scoring' && (
+          <div style={{ textAlign: 'center', padding: '3rem' }}>
+            <div style={{ width: '40px', height: '40px', border: '3px solid #e8e4df', borderTopColor: '#C8522A', borderRadius: '50%', animation: 'spin 0.8s linear infinite', margin: '0 auto 1.5rem' }} />
+            <p style={{ color: '#4A4540', fontSize: '0.95rem' }}>Scoring your site...</p>
+            <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+          </div>
+        )}
+
+        {step === 'scored' && psiData && (
+          <div>
+            <div style={{ background: '#fff', border: '1px solid #e8e4df', borderRadius: '4px', padding: '2rem', marginBottom: '1.5rem' }}>
+              <p style={{ fontSize: '0.75rem', color: '#9A9490', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '1.25rem' }}>Your site score</p>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem', marginBottom: psiData.issues.length ? '1.5rem' : 0 }}>
+                <div style={{ width: '88px', height: '88px', borderRadius: '50%', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: psiData.score >= 75 ? '#3B6D11' : psiData.score >= 50 ? '#854F0B' : '#993C1D' }}>
+                  <span style={{ fontFamily: 'Georgia, serif', fontSize: '2rem', color: '#fff', fontWeight: 700 }}>{psiData.score}</span>
+                </div>
+                <div>
+                  <p style={{ fontFamily: 'Georgia, serif', fontSize: '1.4rem', fontWeight: 700, margin: '0 0 0.25rem', color: psiData.score >= 75 ? '#3B6D11' : psiData.score >= 50 ? '#854F0B' : '#993C1D' }}>
+                    {psiData.score >= 75 ? 'Looking good' : psiData.score >= 50 ? 'Getting there' : 'Needs work'}
+                  </p>
+                  <p style={{ fontSize: '0.85rem', color: '#9A9490', margin: 0, fontWeight: 300 }}>Mobile performance score</p>
+                </div>
+              </div>
+              {psiData.issues.length > 0 && (
+                <div style={{ borderTop: '1px solid #f0ece8', paddingTop: '0.75rem' }}>
+                  {psiData.issues.map((issue, i) => (
+                    <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.55rem 0', borderBottom: i < psiData.issues.length - 1 ? '1px solid #f0ece8' : 'none' }}>
+                      <span style={{ fontSize: '0.88rem', color: '#4A4540' }}>{issue.title}</span>
+                      <span style={{ fontSize: '0.85rem', color: '#993C1D', fontWeight: 500, marginLeft: '1rem', whiteSpace: 'nowrap' }}>{issue.value}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <div style={{ background: '#fff', border: '1px solid #e8e4df', borderRadius: '4px', padding: '2rem' }}>
+              <p style={{ fontFamily: 'Georgia, serif', fontSize: '1.1rem', marginBottom: '0.5rem' }}>Want to know exactly what this means for your business?</p>
+              <p style={{ fontSize: '0.85rem', color: '#9A9490', marginBottom: '1.5rem', fontWeight: 300 }}>Get your free full audit report — we'll analyze every page and tell you exactly what's costing you customers.</p>
+              <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
+                <input
+                  value={email}
+                  onChange={e => setEmail(e.target.value)}
+                  placeholder="you@yourbusiness.com"
+                  onKeyDown={e => e.key === 'Enter' && handleAudit()}
+                  style={{ flex: 1, padding: '0.9rem 1rem', border: '1px solid #ddd', borderRadius: '2px', fontSize: '0.95rem', fontFamily: 'Georgia, serif', minWidth: '200px', background: '#fff', color: '#1A1714' }}
+                />
+                <button onClick={handleAudit}
+                  style={{ background: '#C8522A', color: '#fff', border: 'none', padding: '0.9rem 2rem', borderRadius: '2px', fontSize: '0.95rem', cursor: 'pointer', fontFamily: 'Georgia, serif', whiteSpace: 'nowrap' }}>
+                  Get free audit
+                </button>
+              </div>
+              <div ref={turnstileRef} style={{ marginTop: '1rem' }} />
+              {error && <p style={{ color: '#993C1D', fontSize: '0.85rem', marginTop: '0.5rem' }}>{error}</p>}
+              <p style={{ fontSize: '0.75rem', color: '#9A9490', marginTop: '1rem' }}>Auditing: {url} · <button onClick={() => setStep('idle')} style={{ background: 'none', border: 'none', color: '#C8522A', cursor: 'pointer', fontSize: '0.75rem', padding: 0 }}>Change</button></p>
+            </div>
           </div>
         )}
 
