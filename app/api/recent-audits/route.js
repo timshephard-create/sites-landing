@@ -1,6 +1,5 @@
 export const revalidate = 3600;
 
-// DFW-area cities to scan for in business names
 const DFW_CITIES = [
   'Dallas', 'Fort Worth', 'Plano', 'Arlington', 'Frisco', 'McKinney', 'Allen',
   'Garland', 'Irving', 'Mesquite', 'Carrollton', 'Denton', 'Richardson',
@@ -11,56 +10,77 @@ const DFW_CITIES = [
 ];
 
 const BUSINESS_TYPES = [
-  // Pattern, label, badge
-  [/dental|dentist|orthodon|endodon|periodon/, 'Dental Office', 'HOT'],
-  [/plastic surgery|cosmetic surgery/, 'Plastic Surgery', 'HOT'],
-  [/med spa|medspa|aestheti|botox|filler|laser skin/, 'Med Spa', 'HOT'],
-  [/hvac|heating|cooling|air condition|furnace/, 'HVAC Company', 'HOT'],
-  [/law firm|attorney|legal|lawyer/, 'Law Firm', 'HOT'],
-  [/chiro|chiropract/, 'Chiropractic', 'WARM'],
-  [/physical therapy|pt clinic|rehab center/, 'Physical Therapy', 'WARM'],
-  [/optometry|optometrist|vision|eye care|eye clinic/, 'Eye Care', 'WARM'],
-  [/veterinar|vet |animal hospital|pet clinic/, 'Veterinary', 'WARM'],
-  [/hair salon|hair studio|barber|stylist|blow dry|nail salon|nail spa|beauty salon|salon suite/, 'Salon', 'WARM'],
-  [/spa|massage|wellness/, 'Wellness Spa', 'WARM'],
-  [/gym|fitness|yoga|pilates|crossfit|personal train|boxing/, 'Gym', 'WARM'],
-  [/plumb/, 'Plumbing Company', 'WARM'],
-  [/electric|electrician/, 'Electrician', 'WARM'],
-  [/roofing|roofer/, 'Roofing Company', 'WARM'],
-  [/auto repair|auto shop|car repair|mechanic|tire shop|collision|body shop|oil change/, 'Auto Repair', 'LOW'],
-  [/restaurant|cafe|pizza|sushi|taco|diner|bistro|grill|bbq|barbeque|eatery|kitchen|steakhouse|seafood/, 'Restaurant', 'LOW'],
-  [/florist|flowers|floral/, 'Florist', 'LOW'],
-  [/landscap|lawn care|lawn service|irrigation/, 'Landscaping', 'LOW'],
-  [/clean|maid|janitorial|house clean/, 'Cleaning Service', 'LOW'],
-  [/paint/, 'Painting Company', 'LOW'],
-  [/flooring|floor install/, 'Flooring Company', 'LOW'],
-  [/photo|photography/, 'Photography', 'LOW'],
-  [/catering/, 'Catering', 'LOW'],
-  [/real estate|realty|realtor|homes/, 'Real Estate', 'LOW'],
-  [/insurance/, 'Insurance Agency', 'LOW'],
-  [/accounting|cpa|bookkeeping|tax prep/, 'Accounting Firm', 'LOW'],
-  [/tutoring|learning center|academy|education/, 'Education', 'LOW'],
-  [/therapy|therapist|counseling|mental health/, 'Therapy Practice', 'LOW'],
+  [/dental|dentist|orthodon|endodon|periodon/, 'Dental Office', 'HOT', 'no online booking'],
+  [/plastic surgery|cosmetic surgery/, 'Plastic Surgery', 'HOT', 'no before/after gallery'],
+  [/med spa|medspa|aestheti|botox|filler|laser skin/, 'Med Spa', 'HOT', 'missing service menu'],
+  [/hvac|heating|cooling|air condition|furnace/, 'HVAC Company', 'HOT', 'no quote request form'],
+  [/law firm|attorney|legal|lawyer/, 'Law Firm', 'HOT', 'no client testimonials'],
+  [/chiro|chiropract/, 'Chiropractic', 'WARM', 'outdated design'],
+  [/physical therapy|pt clinic|rehab center/, 'Physical Therapy', 'WARM', 'no appointment booking'],
+  [/optometry|optometrist|vision|eye care|eye clinic/, 'Eye Care', 'WARM', 'missing online scheduling'],
+  [/veterinar|vet |animal hospital|pet clinic/, 'Veterinary', 'WARM', 'no online booking'],
+  [/hair salon|hair studio|barber|stylist|blow dry|nail salon|nail spa|beauty salon|salon suite/, 'Salon', 'WARM', 'no service menu'],
+  [/spa|massage|wellness/, 'Wellness Spa', 'WARM', 'slow load time'],
+  [/gym|fitness|yoga|pilates|crossfit|personal train|boxing/, 'Gym', 'WARM', 'no class schedule'],
+  [/plumb/, 'Plumbing Company', 'WARM', 'no emergency contact CTA'],
+  [/electric|electrician/, 'Electrician', 'WARM', 'no service area listed'],
+  [/roofing|roofer/, 'Roofing Company', 'WARM', 'missing photo gallery'],
+  [/auto repair|auto shop|car repair|mechanic|tire shop|collision|body shop|oil change/, 'Auto Repair', 'LOW', 'no mobile optimization'],
+  [/restaurant|cafe|pizza|sushi|taco|diner|bistro|grill|bbq|barbeque|eatery|kitchen|steakhouse|seafood/, 'Restaurant', 'LOW', 'no online menu'],
+  [/florist|flowers|floral/, 'Florist', 'LOW', 'no online ordering'],
+  [/landscap|lawn care|lawn service|irrigation/, 'Landscaping', 'LOW', 'outdated design'],
+  [/clean|maid|janitorial|house clean/, 'Cleaning Service', 'LOW', 'no instant quote'],
+  [/paint/, 'Painting Company', 'LOW', 'missing portfolio'],
+  [/flooring|floor install/, 'Flooring Company', 'LOW', 'no photo gallery'],
+  [/photo|photography/, 'Photography', 'LOW', 'slow image loading'],
+  [/catering/, 'Catering', 'LOW', 'no menu or pricing'],
+  [/real estate|realty|realtor|homes/, 'Real Estate', 'LOW', 'no search functionality'],
+  [/insurance/, 'Insurance Agency', 'LOW', 'no quote tool'],
+  [/accounting|cpa|bookkeeping|tax prep/, 'Accounting Firm', 'LOW', 'no contact form'],
+  [/tutoring|learning center|academy|education/, 'Education', 'LOW', 'no enrollment info'],
+  [/therapy|therapist|counseling|mental health/, 'Therapy Practice', 'LOW', 'missing intake form'],
 ];
 
 function inferBusiness(name) {
   const n = (name || '').toLowerCase();
-  for (const [pattern, label, badge] of BUSINESS_TYPES) {
-    if (pattern.test(n)) return { label, badge };
+  for (const [pattern, label, badge, defaultIssue] of BUSINESS_TYPES) {
+    if (pattern.test(n)) return { label, badge, defaultIssue };
   }
-  return null; // Skip unrecognized
+  return null;
 }
 
 function extractCity(businessName) {
   if (!businessName) return null;
-  // Check for "City, TX" pattern first
   const txMatch = businessName.match(/([A-Za-z\s]+),\s*TX/i);
   if (txMatch) return txMatch[1].trim();
-  // Scan for known DFW cities
   for (const city of DFW_CITIES) {
     if (businessName.includes(city)) return city;
   }
   return null;
+}
+
+// Deterministic score within badge range — stable per business name
+function generateScore(businessName, badge) {
+  let hash = 0;
+  for (const c of (businessName || '')) hash = (hash * 31 + c.charCodeAt(0)) & 0xffff;
+  const ranges = { HOT: [24, 44], WARM: [45, 64], LOW: [65, 79] };
+  const [min, max] = ranges[badge] || [40, 70];
+  return min + (hash % (max - min + 1));
+}
+
+// Extract a short pain point from customSubject email subject line
+function extractIssue(customSubject, defaultIssue) {
+  if (!customSubject) return defaultIssue;
+  const s = customSubject.toLowerCase();
+  if (/slow|speed|load|performance/.test(s)) return 'slow load time';
+  if (/mobile|phone|responsive/.test(s)) return 'not mobile-friendly';
+  if (/google|seo|search|rank|found/.test(s)) return 'not ranking on Google';
+  if (/contact|form|booking|appointment|schedul/.test(s)) return 'no booking option';
+  if (/review|testimonial|trust/.test(s)) return 'no social proof';
+  if (/design|outdated|old|dated/.test(s)) return 'outdated design';
+  if (/missing|no |lack/.test(s)) return 'missing key content';
+  if (/convert|lead|customer/.test(s)) return 'low conversion rate';
+  return defaultIssue;
 }
 
 function relativeTime(dateStr) {
@@ -106,11 +126,13 @@ export async function GET() {
           businessType: business.label,
           badge: business.badge,
           city: extractCity(f.businessName),
+          score: generateScore(f.businessName, business.badge),
+          issue: extractIssue(f.customSubject, business.defaultIssue),
           relativeTime: time,
         };
       })
       .filter(Boolean)
-      .slice(0, 6);
+      .slice(0, 5);
 
     return Response.json({ audits });
   } catch (e) {

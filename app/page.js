@@ -488,27 +488,37 @@ export default function Home() {
       {/* RECENT AUDITS FEED */}
       {recentAudits.length > 0 && (
         <section style={{ padding: '3rem 2rem 4rem', maxWidth: '700px', margin: '0 auto' }}>
+          <style>{`
+            @keyframes pulse { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.4; transform: scale(0.85); } }
+            @keyframes fadeUp { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+          `}</style>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '1.25rem' }}>
-            <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#3B6D11', display: 'inline-block', animation: 'pulse 2s ease-in-out infinite' }} />
+            <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#3B6D11', display: 'inline-block', animation: 'pulse 2s ease-in-out infinite', flexShrink: 0 }} />
             <p style={{ fontSize: '0.75rem', fontWeight: 500, letterSpacing: '0.12em', textTransform: 'uppercase', color: '#9A9490', margin: 0 }}>Recent audits</p>
           </div>
-          <style>{`@keyframes pulse { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.4; transform: scale(0.85); } }`}</style>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
             {recentAudits.map((a, i) => {
-              const badgeStyles = a.badge === 'HOT' ? { bg: '#FAECE7', color: '#993C1D' }
-                : a.badge === 'WARM' ? { bg: '#FAEEDA', color: '#854F0B' }
-                : { bg: '#F0ECE8', color: '#9A9490' };
+              const palette = a.badge === 'HOT' ? { bg: '#FAECE7', color: '#993C1D', score: '#993C1D' }
+                : a.badge === 'WARM' ? { bg: '#FAEEDA', color: '#854F0B', score: '#854F0B' }
+                : { bg: '#F0ECE8', color: '#9A9490', score: '#3B6D11' };
               return (
-                <div key={i} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0.65rem 0.9rem', background: '#fff', border: '1px solid #e8e4df', borderRadius: '3px' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', minWidth: 0 }}>
-                    <span style={{ fontSize: '0.88rem', color: '#1A1714', whiteSpace: 'nowrap' }}>{a.businessType}</span>
-                    {a.city && <span style={{ fontSize: '0.8rem', color: '#9A9490', whiteSpace: 'nowrap' }}>{a.city}</span>}
+                <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '1rem', padding: '0.85rem 1rem', background: '#fff', border: '1px solid #e8e4df', borderRadius: '3px', animation: 'fadeUp 0.35s ease both', animationDelay: `${i * 70}ms` }}>
+                  {/* Score circle */}
+                  <div style={{ width: '44px', height: '44px', borderRadius: '50%', border: `2px solid ${palette.score}`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                    <span style={{ fontFamily: 'Georgia, serif', fontSize: '0.85rem', fontWeight: 700, color: palette.score, lineHeight: 1 }}>{a.score}</span>
                   </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexShrink: 0, marginLeft: '1rem' }}>
-                    {a.badge && (
-                      <span style={{ fontSize: '0.7rem', padding: '2px 7px', borderRadius: '2px', background: badgeStyles.bg, color: badgeStyles.color, fontWeight: 500, letterSpacing: '0.04em' }}>{a.badge}</span>
-                    )}
-                    <span style={{ fontSize: '0.78rem', color: '#C4BEB8', whiteSpace: 'nowrap' }}>{a.relativeTime}</span>
+                  {/* Business info */}
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.5rem', flexWrap: 'wrap' }}>
+                      <span style={{ fontSize: '0.9rem', color: '#1A1714', fontWeight: 500 }}>{a.businessType}</span>
+                      {a.city && <span style={{ fontSize: '0.78rem', color: '#B0A89E' }}>{a.city}</span>}
+                    </div>
+                    <p style={{ fontSize: '0.78rem', color: '#9A9490', margin: '0.15rem 0 0', fontWeight: 300, fontStyle: 'italic' }}>{a.issue}</p>
+                  </div>
+                  {/* Badge + time */}
+                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '0.3rem', flexShrink: 0 }}>
+                    <span style={{ fontSize: '0.68rem', padding: '2px 7px', borderRadius: '2px', background: palette.bg, color: palette.color, fontWeight: 600, letterSpacing: '0.05em' }}>{a.badge}</span>
+                    <span style={{ fontSize: '0.72rem', color: '#C4BEB8' }}>{a.relativeTime}</span>
                   </div>
                 </div>
               );
