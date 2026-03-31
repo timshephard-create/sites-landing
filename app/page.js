@@ -74,16 +74,29 @@ export default function Home() {
 
     try {
       const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort(), 8000);
+      const timeout = setTimeout(() => {
+        console.log('[PSI] Timeout fired after 30s — aborting');
+        controller.abort();
+      }, 30000);
+      console.log('[PSI] Fetching score for:', url);
       const res = await fetch(
         `https://www.googleapis.com/pagespeedonline/v5/runPagespeed?url=${encodeURIComponent(url)}&strategy=mobile`,
         { signal: controller.signal }
       );
       clearTimeout(timeout);
-      if (!res.ok) throw new Error('PSI failed');
+      console.log('[PSI] Response status:', res.status);
+      if (!res.ok) {
+        const errText = await res.text();
+        console.error('[PSI] Error response:', res.status, errText.slice(0, 500));
+        throw new Error(`PSI HTTP ${res.status}`);
+      }
       const data = await res.json();
       const rawScore = data?.lighthouseResult?.categories?.performance?.score;
-      if (rawScore == null) throw new Error('No score');
+      console.log('[PSI] Raw score:', rawScore, '| top-level keys:', Object.keys(data));
+      if (rawScore == null) {
+        console.error('[PSI] No score found. lighthouseResult keys:', Object.keys(data?.lighthouseResult || {}));
+        throw new Error('No score in response');
+      }
 
       const score = Math.round(rawScore * 100);
       const audits = data.lighthouseResult.audits || {};
@@ -103,9 +116,11 @@ export default function Home() {
         .slice(0, 3)
         .map(a => ({ title: a.title, value: a.displayValue }));
 
+      console.log('[PSI] Score:', score, '| Issues:', issues);
       setPsiData({ score, issues });
       setStep('scored');
     } catch (e) {
+      console.error('[PSI] Caught error — falling back to email step:', e.name, e.message);
       setPsiData(null);
       setStep('email');
     }
