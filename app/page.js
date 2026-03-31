@@ -498,9 +498,9 @@ export default function Home() {
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
             {recentAudits.map((a, i) => {
-              const palette = a.badge === 'HOT' ? { bg: '#FAECE7', color: '#993C1D', score: '#993C1D' }
-                : a.badge === 'WARM' ? { bg: '#FAEEDA', color: '#854F0B', score: '#854F0B' }
-                : { bg: '#F0ECE8', color: '#9A9490', score: '#3B6D11' };
+              const palette = a.badge === 'HOT' ? { bg: '#FAECE7', color: '#993C1D', score: '#993C1D', label: 'Needs work' }
+                : a.badge === 'WARM' ? { bg: '#FAEEDA', color: '#854F0B', score: '#854F0B', label: 'Could be better' }
+                : { bg: '#EAF3DE', color: '#3B6D11', score: '#3B6D11', label: 'Doing okay' };
               return (
                 <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '1rem', padding: '0.85rem 1rem', background: '#fff', border: '1px solid #e8e4df', borderRadius: '3px', animation: 'fadeUp 0.35s ease both', animationDelay: `${i * 70}ms` }}>
                   {/* Score circle */}
@@ -517,7 +517,7 @@ export default function Home() {
                   </div>
                   {/* Badge + time */}
                   <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '0.3rem', flexShrink: 0 }}>
-                    <span style={{ fontSize: '0.68rem', padding: '2px 7px', borderRadius: '2px', background: palette.bg, color: palette.color, fontWeight: 600, letterSpacing: '0.05em' }}>{a.badge}</span>
+                    <span style={{ fontSize: '0.68rem', padding: '2px 7px', borderRadius: '2px', background: palette.bg, color: palette.color, fontWeight: 600, letterSpacing: '0.02em' }}>{palette.label}</span>
                     <span style={{ fontSize: '0.72rem', color: '#C4BEB8' }}>{a.relativeTime}</span>
                   </div>
                 </div>
