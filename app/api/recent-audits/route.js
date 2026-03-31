@@ -91,10 +91,8 @@ export async function GET() {
 
     const data = await res.json();
 
-    // Log first record's field keys to diagnose name mismatches
-    if (data.records?.[0]) {
-      console.log('[recent-audits] Field keys on first record:', Object.keys(data.records[0].fields));
-    }
+    // Expose field keys for one-time diagnosis — remove after confirming
+    const _debugFields = data.records?.[0] ? Object.keys(data.records[0].fields) : [];
 
     const audits = (data.records || [])
       .map(record => {
@@ -113,7 +111,7 @@ export async function GET() {
       .filter(Boolean)
       .slice(0, 6); // Cap at 6 entries
 
-    return Response.json({ audits });
+    return Response.json({ audits, _debugFields });
   } catch (e) {
     console.error('[recent-audits] Error:', e.message);
     return Response.json({ audits: [] });
