@@ -246,12 +246,26 @@ export default function Home() {
         <p style={{ fontSize: '1.15rem', color: '#4A4540', maxWidth: '46ch', lineHeight: 1.75, marginBottom: '2.5rem', fontWeight: 300 }}>
           You've built something real. But if your website looks like it was thrown together in 2014, customers are walking away before they ever call you.
         </p>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem', flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem', flexWrap: 'wrap', marginBottom: '2.5rem' }}>
           <a href="#audit" style={{ background: '#C8522A', color: '#fff', padding: '1rem 2.2rem', borderRadius: '2px', fontSize: '0.95rem', textDecoration: 'none' }}>
             See how your site scores →
           </a>
           <span style={{ fontSize: '0.82rem', color: '#9A9490' }}>Free · Takes 30 seconds · No commitment</span>
         </div>
+
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem', maxWidth: '780px' }}
+          className="hero-testimonial-grid">
+          {[
+            { quote: 'He took responsibility for the brand, completely overhauled the website, and succeeded with almost no budget on a very tight timeframe. I can recommend Tim without hesitation.', name: 'Noah Ullman', title: 'CMO · Keep America Beautiful' },
+            { quote: 'Tim is the total package: Concept, Design, Execution, Polish, Delivery. I was able to depend upon him when deadlines were looming and odds were against us for completing goals on time.', name: 'Nathan McCall', title: 'Pali Camp' },
+          ].map(({ quote, name, title }) => (
+            <div key={name}>
+              <p style={{ fontFamily: 'Georgia, serif', fontSize: '0.95rem', fontStyle: 'italic', color: '#4A4540', lineHeight: 1.75, margin: '0 0 0.6rem' }}>&ldquo;{quote}&rdquo;</p>
+              <p style={{ fontSize: '0.82rem', color: '#9A9490', margin: 0 }}>— {name}{title ? `, ${title}` : ''}</p>
+            </div>
+          ))}
+        </div>
+        <style>{`.hero-testimonial-grid { grid-template-columns: 1fr 1fr; } @media (max-width: 600px) { .hero-testimonial-grid { grid-template-columns: 1fr; } }`}</style>
       </section>
 
       {/* PROOF BAR */}
@@ -268,23 +282,9 @@ export default function Home() {
       <section id="audit" style={{ padding: '6rem 2rem', maxWidth: '700px', margin: '0 auto' }}>
         <p style={{ fontSize: '0.75rem', fontWeight: 500, letterSpacing: '0.12em', textTransform: 'uppercase', color: '#C8522A', marginBottom: '1rem' }}>Free website audit</p>
         <h2 style={{ fontFamily: 'Georgia, serif', fontSize: 'clamp(2rem, 4vw, 3rem)', lineHeight: 1.2, marginBottom: '1rem' }}>Most local business websites are losing customers every day. Is yours?</h2>
-        <p style={{ fontSize: '1rem', color: '#4A4540', lineHeight: 1.8, marginBottom: '2rem', fontWeight: 300 }}>
+        <p style={{ fontSize: '1rem', color: '#4A4540', lineHeight: 1.8, marginBottom: '2.5rem', fontWeight: 300 }}>
           Enter your website URL and get an honest assessment in under a minute. No fluff, no generic advice — just a real look at what's working and what's costing you customers.
         </p>
-
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem', marginBottom: '2rem' }}
-          className="testimonial-grid">
-          {[
-            { quote: 'He took responsibility for the brand, completely overhauled the website, and succeeded with almost no budget on a very tight timeframe. I can recommend Tim without hesitation.', name: 'Noah Ullman', title: 'CMO · Keep America Beautiful' },
-            { quote: 'Tim is the total package: Concept, Design, Execution, Polish, Delivery. I was able to depend upon him when deadlines were looming and odds were against us for completing goals on time.', name: 'Nathan McCall', title: 'Pali Camp' },
-          ].map(({ quote, name, title }) => (
-            <div key={name}>
-              <p style={{ fontFamily: 'Georgia, serif', fontSize: '0.9rem', fontStyle: 'italic', color: '#4A4540', lineHeight: 1.75, margin: '0 0 0.6rem' }}>&ldquo;{quote}&rdquo;</p>
-              <p style={{ fontSize: '0.75rem', color: '#9A9490', margin: 0, fontWeight: 400 }}>— {name}<span style={{ fontWeight: 300 }}>{title ? `, ${title}` : ''}</span></p>
-            </div>
-          ))}
-        </div>
-        <style>{`.testimonial-grid { grid-template-columns: 1fr 1fr; } @media (max-width: 560px) { .testimonial-grid { grid-template-columns: 1fr; } }`}</style>
 
         {step === 'idle' && (
           <div>
