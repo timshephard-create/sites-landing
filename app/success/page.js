@@ -1,11 +1,10 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 
-export default function Success() {
+function PurchaseTracking() {
   const searchParams = useSearchParams();
-
   useEffect(() => {
     const transactionId = searchParams.get('session_id') || searchParams.get('transaction_id') || undefined;
     if (typeof fbq !== 'undefined') fbq('track', 'Purchase', { value: 147, currency: 'USD' });
@@ -15,9 +14,15 @@ export default function Success() {
       ...(transactionId && { transaction_id: transactionId }),
     });
   }, []);
+  return null;
+}
 
+export default function Success() {
   return (
     <main style={{ fontFamily: 'Georgia, serif', background: '#F7F3EE', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '2rem' }}>
+      <Suspense fallback={null}>
+        <PurchaseTracking />
+      </Suspense>
       <div style={{ maxWidth: '560px', textAlign: 'center' }}>
         <div style={{ width: '64px', height: '64px', background: '#3B6D11', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 2rem' }}>
           <span style={{ color: '#fff', fontSize: '1.8rem' }}>&#10003;</span>
