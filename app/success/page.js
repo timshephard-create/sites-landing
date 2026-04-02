@@ -1,6 +1,21 @@
 'use client';
 
+import { useEffect } from 'react';
+import { useSearchParams } from 'next/navigation';
+
 export default function Success() {
+  const searchParams = useSearchParams();
+
+  useEffect(() => {
+    const transactionId = searchParams.get('session_id') || searchParams.get('transaction_id') || undefined;
+    if (typeof fbq !== 'undefined') fbq('track', 'Purchase', { value: 147, currency: 'USD' });
+    if (typeof gtag !== 'undefined') gtag('event', 'purchase', {
+      value: 147,
+      currency: 'USD',
+      ...(transactionId && { transaction_id: transactionId }),
+    });
+  }, []);
+
   return (
     <main style={{ fontFamily: 'Georgia, serif', background: '#F7F3EE', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '2rem' }}>
       <div style={{ maxWidth: '560px', textAlign: 'center' }}>

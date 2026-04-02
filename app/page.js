@@ -141,6 +141,8 @@ export default function Home() {
       console.log('[PSI] Score:', score, '| Issues:', issues);
       setPsiData({ score, issues });
       setStep('scored');
+      if (typeof fbq !== 'undefined') fbq('track', 'ViewContent', { content_name: 'Speed Check' });
+      if (typeof gtag !== 'undefined') gtag('event', 'speed_check_started');
     } catch (e) {
       console.error('[PSI] Caught error — falling back to email step:', e.name, e.message);
       setPsiData(null);
@@ -172,6 +174,8 @@ export default function Home() {
       setAudit(data.audit);
       setPagesCrawled(data.pagesCrawled || []);
       setStep('results');
+      if (typeof fbq !== 'undefined') fbq('track', 'Lead', { content_name: 'Free Audit' });
+      if (typeof gtag !== 'undefined') gtag('event', 'free_audit_requested');
     } catch(e) {
       setError(e.message || 'Something went wrong. Please try again.');
       setStep('email');
@@ -181,6 +185,8 @@ export default function Home() {
   };
 
   const handleCheckout = async () => {
+    if (typeof fbq !== 'undefined') fbq('track', 'InitiateCheckout', { value: 147, currency: 'USD' });
+    if (typeof gtag !== 'undefined') gtag('event', 'paid_audit_clicked', { value: 147, currency: 'USD' });
     try {
       const res = await fetch('/api/checkout', {
         method: 'POST',
