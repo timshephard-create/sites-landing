@@ -18,12 +18,19 @@ export default function Home() {
   const auditInFlight = useRef(false);
   const turnstileRef = useRef(null);
   const turnstileWidgetId = useRef(null);
+  const scoredSectionRef = useRef(null);
 
   useEffect(() => {
     const handleScroll = () => setShowSticky(window.scrollY > 300);
     window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
+
+  useEffect(() => {
+    if (step === 'scored' && scoredSectionRef.current) {
+      setTimeout(() => scoredSectionRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' }), 300);
+    }
+  }, [step]);
 
   useEffect(() => {
     fetch('/api/recent-audits')
@@ -288,6 +295,27 @@ export default function Home() {
 
         {step === 'idle' && (
           <div>
+            {/* 3-STEP JOURNEY INDICATOR */}
+            <div style={{ marginBottom: '2rem', border: '1px solid #e8e4df', borderRadius: '4px', overflow: 'hidden', background: '#fff' }}>
+              {[
+                { n: '1', title: 'Instant speed check', sub: 'Enter your URL. See your mobile performance score and up to 3 specific issues dragging your site down. No email required.' },
+                { n: '2', title: 'Free audit', sub: 'Enter your email. Get a full site score, 4–5 diagnosed issues with impact ratings, and a mockup of what a high-converting version of your site could look like.' },
+                { n: '3', title: 'Full paid audit', price: '$147', sub: 'A 7-section deep-dive with specific findings pulled from your actual pages, priority-ranked recommendations, and a custom AI-generated mockup of your homepage.' },
+              ].map(({ n, title, price, sub }, i, arr) => (
+                <div key={n} style={{ display: 'flex', gap: '1rem', padding: '1rem 1.25rem', borderBottom: i < arr.length - 1 ? '1px solid #f0ece8' : 'none', alignItems: 'flex-start' }}>
+                  <div style={{ width: '24px', height: '24px', borderRadius: '50%', background: n === '3' ? '#1A1714' : '#C8522A', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: '1px' }}>
+                    <span style={{ color: '#fff', fontSize: '0.7rem', fontWeight: 700, fontFamily: 'Georgia, serif' }}>{n}</span>
+                  </div>
+                  <div>
+                    <p style={{ margin: '0 0 0.2rem', fontSize: '0.88rem', fontWeight: 600, color: '#1A1714' }}>
+                      {title}{price && <span style={{ marginLeft: '0.4rem', fontSize: '0.78rem', color: '#9A9490', fontWeight: 400 }}>{price}</span>}
+                    </p>
+                    <p style={{ margin: 0, fontSize: '0.8rem', color: '#9A9490', lineHeight: 1.6, fontWeight: 300 }}>{sub}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+
             <p style={{ fontSize: '0.82rem', color: '#9A9490', lineHeight: 1.6, marginBottom: '1rem', fontWeight: 300 }}>57% of users won't recommend a business with a poorly designed mobile site. Here's how yours stacks up.</p>
             <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
               <input
@@ -315,52 +343,69 @@ export default function Home() {
         )}
 
         {step === 'scored' && psiData && (
-          <div>
-            <div style={{ background: '#fff', border: '1px solid #e8e4df', borderRadius: '4px', padding: '2rem', marginBottom: '1.5rem' }}>
-              <p style={{ fontSize: '0.75rem', color: '#9A9490', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '1.25rem' }}>Your site score</p>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem', marginBottom: psiData.issues.length ? '1.5rem' : 0 }}>
-                <div style={{ width: '88px', height: '88px', borderRadius: '50%', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: psiData.score >= 75 ? '#3B6D11' : psiData.score >= 50 ? '#854F0B' : '#993C1D' }}>
-                  <span style={{ fontFamily: 'Georgia, serif', fontSize: '2rem', color: '#fff', fontWeight: 700 }}>{psiData.score}</span>
+          <div ref={scoredSectionRef}>
+            {/* PSI Score card */}
+            <div style={{ background: '#fff', border: '1px solid #e8e4df', borderRadius: '4px', padding: '1.5rem', marginBottom: '1rem' }}>
+              <p style={{ fontSize: '0.75rem', color: '#9A9490', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '1rem' }}>Step 1 result — Mobile performance score</p>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem', marginBottom: psiData.issues.length ? '1.25rem' : 0 }}>
+                <div style={{ width: '80px', height: '80px', borderRadius: '50%', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: psiData.score >= 75 ? '#3B6D11' : psiData.score >= 50 ? '#854F0B' : '#993C1D' }}>
+                  <span style={{ fontFamily: 'Georgia, serif', fontSize: '1.8rem', color: '#fff', fontWeight: 700 }}>{psiData.score}</span>
                 </div>
                 <div>
-                  <p style={{ fontFamily: 'Georgia, serif', fontSize: '1.4rem', fontWeight: 700, margin: '0 0 0.25rem', color: psiData.score >= 75 ? '#3B6D11' : psiData.score >= 50 ? '#854F0B' : '#993C1D' }}>
+                  <p style={{ fontFamily: 'Georgia, serif', fontSize: '1.3rem', fontWeight: 700, margin: '0 0 0.2rem', color: psiData.score >= 75 ? '#3B6D11' : psiData.score >= 50 ? '#854F0B' : '#993C1D' }}>
                     {psiData.score >= 75 ? 'Looking good' : psiData.score >= 50 ? 'Getting there' : 'Needs work'}
                   </p>
-                  <p style={{ fontSize: '0.85rem', color: '#9A9490', margin: '0 0 0.4rem', fontWeight: 300 }}>Mobile performance score</p>
                   <p style={{ fontSize: '0.82rem', color: '#9A9490', margin: 0, fontWeight: 300 }}>The average website loads in under 3 seconds.</p>
                 </div>
               </div>
               {psiData.issues.length > 0 && (
                 <div style={{ borderTop: '1px solid #f0ece8', paddingTop: '0.75rem' }}>
                   {psiData.issues.map((issue, i) => (
-                    <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.55rem 0', borderBottom: i < psiData.issues.length - 1 ? '1px solid #f0ece8' : 'none' }}>
-                      <span style={{ fontSize: '0.88rem', color: '#4A4540' }}>{issue.title}</span>
-                      <span style={{ fontSize: '0.85rem', color: '#993C1D', fontWeight: 500, marginLeft: '1rem', whiteSpace: 'nowrap' }}>{issue.value}</span>
+                    <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.45rem 0', borderBottom: i < psiData.issues.length - 1 ? '1px solid #f0ece8' : 'none' }}>
+                      <span style={{ fontSize: '0.85rem', color: '#4A4540' }}>{issue.title}</span>
+                      <span style={{ fontSize: '0.82rem', color: '#993C1D', fontWeight: 500, marginLeft: '1rem', whiteSpace: 'nowrap' }}>{issue.value}</span>
                     </div>
                   ))}
                 </div>
               )}
             </div>
 
-            <div style={{ background: '#fff', border: '1px solid #e8e4df', borderRadius: '4px', padding: '2rem' }}>
-              <p style={{ fontFamily: 'Georgia, serif', fontSize: '1.1rem', marginBottom: '0.5rem' }}>Want to know exactly what this means for your business?</p>
-              <p style={{ fontSize: '0.85rem', color: '#9A9490', marginBottom: '1.5rem', fontWeight: 300 }}>Get your free full audit report — we'll analyze every page and tell you exactly what's costing you customers.</p>
+            {/* What's in your free audit — value block */}
+            <div style={{ background: '#F7F3EE', border: '1px solid #e8e4df', borderRadius: '4px', padding: '1.25rem 1.5rem', marginBottom: '1rem' }}>
+              <p style={{ fontSize: '0.75rem', fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#C8522A', margin: '0 0 0.75rem' }}>Step 2 — Your free audit includes:</p>
+              {[
+                'Overall site score with letter grade',
+                '4–5 diagnosed issues, each with a plain-English description and high / medium / low impact rating',
+                'Industry stat callouts showing what these issues are likely costing you in lost customers',
+                'A mockup showing what a high-converting version of your site could look like',
+              ].map((item, i) => (
+                <div key={i} style={{ display: 'flex', gap: '0.6rem', alignItems: 'flex-start', marginBottom: i < 3 ? '0.5rem' : 0 }}>
+                  <span style={{ color: '#C8522A', fontSize: '0.8rem', flexShrink: 0, marginTop: '2px' }}>✓</span>
+                  <span style={{ fontSize: '0.85rem', color: '#4A4540', lineHeight: 1.55, fontWeight: 300 }}>{item}</span>
+                </div>
+              ))}
+            </div>
+
+            {/* Email capture */}
+            <div style={{ background: '#fff', border: '1px solid #e8e4df', borderRadius: '4px', padding: '1.5rem' }}>
+              <p style={{ fontFamily: 'Georgia, serif', fontSize: '1.05rem', marginBottom: '0.3rem', fontWeight: 700 }}>Where should we send your free audit?</p>
+              <p style={{ fontSize: '0.82rem', color: '#9A9490', marginBottom: '1.25rem', fontWeight: 300 }}>No spam. One email with your results.</p>
               <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
                 <input
                   value={email}
                   onChange={e => setEmail(e.target.value)}
                   placeholder="you@yourbusiness.com"
                   onKeyDown={e => e.key === 'Enter' && handleAudit()}
-                  style={{ flex: 1, padding: '0.9rem 1rem', border: '1px solid #ddd', borderRadius: '2px', fontSize: '0.95rem', fontFamily: 'Georgia, serif', minWidth: '200px', background: '#fff', color: '#1A1714' }}
+                  style={{ flex: 1, padding: '0.9rem 1rem', border: '1px solid #ddd', borderRadius: '2px', fontSize: '0.95rem', fontFamily: 'Georgia, serif', minWidth: '180px', background: '#fff', color: '#1A1714' }}
                 />
                 <button onClick={handleAudit}
-                  style={{ background: '#C8522A', color: '#fff', border: 'none', padding: '0.9rem 2rem', borderRadius: '2px', fontSize: '0.95rem', cursor: 'pointer', fontFamily: 'Georgia, serif', whiteSpace: 'nowrap' }}>
+                  style={{ background: '#C8522A', color: '#fff', border: 'none', padding: '0.9rem 1.75rem', borderRadius: '2px', fontSize: '0.95rem', cursor: 'pointer', fontFamily: 'Georgia, serif', whiteSpace: 'nowrap' }}>
                   Get free audit
                 </button>
               </div>
-              <div ref={turnstileRef} style={{ marginTop: '1rem' }} />
+              <div ref={turnstileRef} style={{ marginTop: '0.75rem' }} />
               {error && <p style={{ color: '#993C1D', fontSize: '0.85rem', marginTop: '0.5rem' }}>{error}</p>}
-              <p style={{ fontSize: '0.75rem', color: '#9A9490', marginTop: '1rem' }}>Auditing: {url} · <button onClick={() => setStep('idle')} style={{ background: 'none', border: 'none', color: '#C8522A', cursor: 'pointer', fontSize: '0.75rem', padding: 0 }}>Change</button></p>
+              <p style={{ fontSize: '0.72rem', color: '#9A9490', marginTop: '0.75rem' }}>Auditing: {url} · <button onClick={() => setStep('idle')} style={{ background: 'none', border: 'none', color: '#C8522A', cursor: 'pointer', fontSize: '0.72rem', padding: 0 }}>Change</button></p>
             </div>
           </div>
         )}
@@ -448,7 +493,7 @@ export default function Home() {
                     ))}
                   </ul>
                   <button onClick={handleCheckout} style={{ display: 'block', width: '100%', background: '#C8522A', color: '#fff', border: 'none', padding: '0.85rem 1.5rem', borderRadius: '2px', fontSize: '0.9rem', cursor: 'pointer', fontFamily: 'Georgia, serif', marginTop: '1.25rem' }}>
-                    See the full fix — $147 report →
+                    Get My Full Audit Report
                   </button>
                 </div>
               );
@@ -478,8 +523,36 @@ export default function Home() {
                 <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: '55%', background: 'linear-gradient(to bottom, transparent, rgba(255,255,255,0.97))', pointerEvents: 'none' }} />
               </div>
               <button onClick={handleCheckout} style={{ display: 'block', width: '100%', background: '#C8522A', color: '#fff', border: 'none', padding: '1rem 1.8rem', borderRadius: '2px', fontSize: '1rem', cursor: 'pointer', fontFamily: 'Georgia, serif', marginTop: '1.25rem' }}>
-                Get Your Full Report →
+                Get My Full Audit Report
               </button>
+            </div>
+
+            {/* FREE VS PAID COMPARISON TABLE */}
+            <div style={{ marginTop: '1.5rem', border: '1px solid #e8e4df', borderRadius: '4px', overflow: 'hidden', background: '#fff' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', borderBottom: '1px solid #e8e4df' }}>
+                <div style={{ padding: '0.75rem 1rem', background: '#F7F3EE', borderRight: '1px solid #e8e4df' }}>
+                  <p style={{ margin: 0, fontSize: '0.75rem', fontWeight: 700, color: '#4A4540', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Free Audit</p>
+                </div>
+                <div style={{ padding: '0.75rem 1rem', background: '#1A1714' }}>
+                  <p style={{ margin: 0, fontSize: '0.75rem', fontWeight: 700, color: '#C8522A', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Full Report — $147</p>
+                </div>
+              </div>
+              {[
+                ['Homepage + up to 4 pages crawled', 'Up to 9 pages + sitemap crawl'],
+                ['4–5 issues identified', '7 full sections analyzed'],
+                ['Issue descriptions + impact ratings', 'Specific findings from your actual pages'],
+                ['Generic industry mockup', 'Custom AI mockup of your homepage'],
+                ['On screen + email', 'Full report delivered to your inbox'],
+              ].map(([free, paid], i, arr) => (
+                <div key={i} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', borderBottom: i < arr.length - 1 ? '1px solid #e8e4df' : 'none' }}>
+                  <div style={{ padding: '0.6rem 1rem', borderRight: '1px solid #e8e4df', background: '#FAFAF9' }}>
+                    <p style={{ margin: 0, fontSize: '0.78rem', color: '#6B6560', fontWeight: 300, lineHeight: 1.4 }}>{free}</p>
+                  </div>
+                  <div style={{ padding: '0.6rem 1rem', background: '#fff' }}>
+                    <p style={{ margin: 0, fontSize: '0.78rem', color: '#1A1714', fontWeight: 400, lineHeight: 1.4 }}>{paid}</p>
+                  </div>
+                </div>
+              ))}
             </div>
 
             {/* MAIN CTA BLOCK */}
@@ -488,7 +561,7 @@ export default function Home() {
               <p style={{ fontSize: '0.88rem', color: 'rgba(255,255,255,0.5)', marginBottom: '0.5rem', fontWeight: 300 }}>7-section deep-dive with specific fixes, priority order, and a custom mockup of your homepage — delivered to your inbox in minutes.</p>
               <p style={{ fontSize: '0.88rem', color: 'rgba(255,255,255,0.7)', marginBottom: '1.5rem' }}>Everything in the free audit is fixable. The full report shows you exactly how.</p>
               <button onClick={handleCheckout} style={{ display: 'block', width: '100%', background: '#C8522A', color: '#fff', border: 'none', padding: '1rem 1.8rem', borderRadius: '2px', fontSize: '1rem', cursor: 'pointer', fontFamily: 'Georgia, serif', marginBottom: '0.75rem' }}>
-                Get Full Report + Custom Mockup — $147
+                Get My Full Audit Report — $147
               </button>
               <p style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.25)', marginBottom: '1.25rem' }}>Delivered to {email} within 2 minutes</p>
               <p style={{ fontSize: '0.78rem', color: 'rgba(255,255,255,0.3)', margin: 0 }}>
