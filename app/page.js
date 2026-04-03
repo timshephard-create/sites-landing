@@ -252,15 +252,15 @@ export default function Home() {
 
       {/* HERO */}
       <section style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '8rem 2rem 5rem', maxWidth: '1100px', margin: '0 auto' }}>
-        <p style={{ fontSize: '0.78rem', fontWeight: 500, letterSpacing: '0.12em', textTransform: 'uppercase', color: '#C8522A', marginBottom: '1.5rem' }}>Flat-fee website rebuilds for local businesses</p>
-        <h1 style={{ fontFamily: 'Georgia, serif', fontSize: 'clamp(2.8rem, 6vw, 5.5rem)', lineHeight: 1.1, fontWeight: 700, maxWidth: '14ch', marginBottom: '1.75rem' }}>
-          Your business is great.<br /><em style={{ fontStyle: 'italic', color: '#C8522A' }}>Your website</em><br />should be too.
+        <p style={{ fontSize: '0.78rem', fontWeight: 500, letterSpacing: '0.12em', textTransform: 'uppercase', color: '#C8522A', marginBottom: '1.5rem' }}>Free website score card — DFW businesses</p>
+        <h1 style={{ fontFamily: 'Georgia, serif', fontSize: 'clamp(2.8rem, 6vw, 5.5rem)', lineHeight: 1.1, fontWeight: 700, maxWidth: '18ch', marginBottom: '1.75rem' }}>
+          Find out what your website is costing you. Free. In 60 seconds.
         </h1>
         <p style={{ fontSize: '1.15rem', color: '#4A4540', maxWidth: '46ch', lineHeight: 1.75, marginBottom: '2.5rem', fontWeight: 300 }}>
-          You've built something real. But if your website looks like it was thrown together in 2014, customers are walking away before they ever call you.
+          Get an honest 5-point score card built for DFW small businesses. No fluff, no sales pitch — just the truth about your site.
         </p>
         <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem', flexWrap: 'wrap', marginBottom: '2.5rem' }}>
-          <a href="#audit" style={{ background: '#C8522A', color: '#fff', padding: '1rem 2.2rem', borderRadius: '2px', fontSize: '0.95rem', textDecoration: 'none' }}>
+          <a href="#audit" style={{ background: '#C8522A', color: '#fff', padding: '1rem 2.2rem', borderRadius: '2px', fontSize: '0.95rem', textDecoration: 'none', minHeight: '52px', display: 'inline-flex', alignItems: 'center' }}>
             See how your site scores →
           </a>
           <span style={{ fontSize: '0.82rem', color: '#9A9490' }}>Free · Takes 30 seconds · No commitment</span>
@@ -281,22 +281,12 @@ export default function Home() {
         <style>{`.hero-testimonial-grid { grid-template-columns: 1fr 1fr; } @media (max-width: 600px) { .hero-testimonial-grid { grid-template-columns: 1fr; } }`}</style>
       </section>
 
-      {/* PROOF BAR */}
-      <div style={{ background: '#1A1714', padding: '1.5rem 2rem', display: 'flex', justifyContent: 'center', gap: '3rem', flexWrap: 'wrap' }}>
-        {[['$1,500', 'Flat fee, all in'], ['2 wks', 'Delivery time'], ['20+', 'Years in brand & creative'], ['DFW', 'Locally based']].map(([num, label]) => (
-          <div key={label} style={{ textAlign: 'center' }}>
-            <span style={{ fontFamily: 'Georgia, serif', fontSize: '1.8rem', color: '#fff', display: 'block' }}>{num}</span>
-            <span style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.5)', letterSpacing: '0.08em', textTransform: 'uppercase' }}>{label}</span>
-          </div>
-        ))}
-      </div>
-
       {/* AUDIT WIDGET */}
       <section id="audit" style={{ padding: '6rem 2rem', maxWidth: '700px', margin: '0 auto' }}>
         <p style={{ fontSize: '0.75rem', fontWeight: 500, letterSpacing: '0.12em', textTransform: 'uppercase', color: '#C8522A', marginBottom: '1rem' }}>Free website audit</p>
         <h2 style={{ fontFamily: 'Georgia, serif', fontSize: 'clamp(2rem, 4vw, 3rem)', lineHeight: 1.2, marginBottom: '1rem' }}>Most local business websites are losing customers every day. Is yours?</h2>
         <p style={{ fontSize: '1rem', color: '#4A4540', lineHeight: 1.8, marginBottom: '2.5rem', fontWeight: 300 }}>
-          Enter your website URL and get an honest assessment in under a minute. No fluff, no generic advice — just a real look at what's working and what's costing you customers.
+          Type in your URL. We'll score your site on speed, mobile, SEO, trust, and revenue leaks — and send you the full breakdown free.
         </p>
 
         {step === 'idle' && (
@@ -323,16 +313,21 @@ export default function Home() {
             </div>
 
             <p style={{ fontSize: '0.82rem', color: '#9A9490', lineHeight: 1.6, marginBottom: '1rem', fontWeight: 300 }}>57% of users won't recommend a business with a poorly designed mobile site. Here's how yours stacks up.</p>
-            <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
+            <style>{`
+              .audit-input-row { display: flex; gap: 0.75rem; flex-wrap: wrap; }
+              .audit-url-input { flex: 1; padding: 0.9rem 1rem; border: 1px solid #ddd; border-radius: 2px; font-size: 0.95rem; font-family: Georgia, serif; min-width: 200px; background: #fff; color: #1A1714; min-height: 52px; box-sizing: border-box; }
+              .audit-btn { background: #C8522A; color: #fff; border: none; padding: 0.9rem 2rem; border-radius: 2px; font-size: 0.95rem; cursor: pointer; font-family: Georgia, serif; white-space: nowrap; min-height: 52px; }
+              @media (max-width: 480px) { .audit-btn { width: 100%; } .audit-url-input { width: 100%; } }
+            `}</style>
+            <div className="audit-input-row">
               <input
                 value={url}
                 onChange={e => setUrl(e.target.value)}
                 placeholder="https://yourbusiness.com"
                 onKeyDown={e => e.key === 'Enter' && handleUrlSubmit()}
-                style={{ flex: 1, padding: '0.9rem 1rem', border: '1px solid #ddd', borderRadius: '2px', fontSize: '0.95rem', fontFamily: 'Georgia, serif', minWidth: '200px', background: '#fff', color: '#1A1714' }}
+                className="audit-url-input"
               />
-              <button onClick={handleUrlSubmit}
-                style={{ background: '#C8522A', color: '#fff', border: 'none', padding: '0.9rem 2rem', borderRadius: '2px', fontSize: '0.95rem', cursor: 'pointer', fontFamily: 'Georgia, serif', whiteSpace: 'nowrap' }}>
+              <button onClick={handleUrlSubmit} className="audit-btn">
                 Audit my site
               </button>
             </div>
@@ -394,21 +389,27 @@ export default function Home() {
 
             {/* Email capture */}
             <div style={{ background: '#fff', border: '1px solid #e8e4df', borderRadius: '4px', padding: '1.5rem' }}>
+              <p style={{ fontSize: '0.72rem', fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#9A9490', marginBottom: '0.4rem' }}>Where should we send your free score card?</p>
               <p style={{ fontFamily: 'Georgia, serif', fontSize: '1.05rem', marginBottom: '0.3rem', fontWeight: 700 }}>Where should we send your free audit?</p>
-              <p style={{ fontSize: '0.82rem', color: '#9A9490', marginBottom: '1.25rem', fontWeight: 300 }}>No spam. One email with your results.</p>
-              <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
+              <style>{`
+                .email-input-row { display: flex; gap: 0.75rem; flex-wrap: wrap; }
+                .email-input { flex: 1; padding: 0.9rem 1rem; border: 1px solid #ddd; border-radius: 2px; font-size: 0.95rem; font-family: Georgia, serif; min-width: 180px; background: #fff; color: #1A1714; min-height: 52px; box-sizing: border-box; }
+                .email-btn { background: #C8522A; color: #fff; border: none; padding: 0.9rem 1.75rem; border-radius: 2px; font-size: 0.95rem; cursor: pointer; font-family: Georgia, serif; white-space: nowrap; min-height: 52px; }
+                @media (max-width: 480px) { .email-btn { width: 100%; } .email-input { width: 100%; } }
+              `}</style>
+              <div className="email-input-row">
                 <input
                   value={email}
                   onChange={e => setEmail(e.target.value)}
                   placeholder="you@yourbusiness.com"
                   onKeyDown={e => e.key === 'Enter' && handleAudit()}
-                  style={{ flex: 1, padding: '0.9rem 1rem', border: '1px solid #ddd', borderRadius: '2px', fontSize: '0.95rem', fontFamily: 'Georgia, serif', minWidth: '180px', background: '#fff', color: '#1A1714' }}
+                  className="email-input"
                 />
-                <button onClick={handleAudit}
-                  style={{ background: '#C8522A', color: '#fff', border: 'none', padding: '0.9rem 1.75rem', borderRadius: '2px', fontSize: '0.95rem', cursor: 'pointer', fontFamily: 'Georgia, serif', whiteSpace: 'nowrap' }}>
+                <button onClick={handleAudit} className="email-btn">
                   Get free audit
                 </button>
               </div>
+              <p style={{ fontSize: '0.75rem', color: '#9A9490', textAlign: 'center', marginTop: '0.6rem', fontWeight: 300 }}>No spam. One email. Unsubscribe anytime.</p>
               <div ref={turnstileRef} style={{ marginTop: '0.75rem' }} />
               {error && <p style={{ color: '#993C1D', fontSize: '0.85rem', marginTop: '0.5rem' }}>{error}</p>}
               <p style={{ fontSize: '0.72rem', color: '#9A9490', marginTop: '0.75rem' }}>Auditing: {url} · <button onClick={() => setStep('idle')} style={{ background: 'none', border: 'none', color: '#C8522A', cursor: 'pointer', fontSize: '0.72rem', padding: 0 }}>Change</button></p>
@@ -579,6 +580,16 @@ export default function Home() {
         )}
       </section>
 
+      {/* PROOF BAR */}
+      <div style={{ background: '#1A1714', padding: '1.5rem 2rem', display: 'flex', justifyContent: 'center', gap: '3rem', flexWrap: 'wrap' }}>
+        {[['$1,500', 'Flat fee, all in'], ['2 wks', 'Delivery time'], ['300+', 'Sites audited & scored'], ['DFW', 'Locally based']].map(([num, label]) => (
+          <div key={label} style={{ textAlign: 'center' }}>
+            <span style={{ fontFamily: 'Georgia, serif', fontSize: '1.8rem', color: '#fff', display: 'block' }}>{num}</span>
+            <span style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.5)', letterSpacing: '0.08em', textTransform: 'uppercase' }}>{label}</span>
+          </div>
+        ))}
+      </div>
+
       {/* RECENT AUDITS FEED */}
       {recentAudits.length > 0 && (
         <section style={{ padding: '3rem 2rem 4rem', maxWidth: '700px', margin: '0 auto' }}>
@@ -658,8 +669,12 @@ export default function Home() {
       <section style={{ padding: '6rem 2rem', background: '#F7F3EE' }}>
         <div className="about-grid">
           <div>
+            <div style={{ width: '120px', height: '120px', borderRadius: '50%', background: '#C8522A', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '1.5rem' }}>
+              <span style={{ fontFamily: 'Georgia, serif', fontSize: '2rem', fontWeight: 700, color: '#fff', letterSpacing: '0.05em' }}>TS</span>
+            </div>
             <p style={{ fontSize: '0.75rem', fontWeight: 500, letterSpacing: '0.12em', textTransform: 'uppercase', color: '#C8522A', marginBottom: '1rem' }}>Who I am</p>
-            <h2 style={{ fontFamily: 'Georgia, serif', fontSize: 'clamp(2rem, 4vw, 3rem)', lineHeight: 1.2, marginBottom: '1.5rem' }}>A Creative Director.<br />Based right here<br />in DFW.</h2>
+            <h2 style={{ fontFamily: 'Georgia, serif', fontSize: 'clamp(2rem, 4vw, 3rem)', lineHeight: 1.2, marginBottom: '0.75rem' }}>A Creative Director.<br />Based right here<br />in DFW.</h2>
+            <p style={{ fontSize: '1rem', color: '#4A4540', lineHeight: 1.7, fontWeight: 300, marginBottom: '1.5rem' }}>I've led campaigns reaching 11.9M people. Now I build websites for the businesses that make DFW run.</p>
             <div style={{ background: '#fff', padding: '1.5rem', borderRadius: '2px', borderLeft: '3px solid #C8522A', marginBottom: '1.5rem' }}>
               <p style={{ fontWeight: 500, fontSize: '0.9rem', color: '#1A1714', marginBottom: '0.3rem' }}>Keep America Beautiful — Senior Creative Director</p>
               <p style={{ fontSize: '0.82rem', color: '#4A4540', fontWeight: 300 }}>Led national campaigns reaching 11.9 million participants across 20,000+ community partners</p>
