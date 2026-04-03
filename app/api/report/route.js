@@ -492,12 +492,23 @@ Return a JSON object with this exact structure:
 
 Include these 7 sections: First Impressions, SEO & Discoverability, Mobile Experience, Trust & Credibility, Calls to Action, Page Speed & Technical, Content Quality.
 
+STRICT HALLUCINATION RULES — violations will cause this finding to be rejected by the validator:
+- NEVER flag a feature as missing unless you have confirmed its absence across ALL scraped pages provided — a feature not found on the homepage may exist on /services or /contact
+- NEVER reference competitors or industry benchmarks unless they appear verbatim in the scraped content
+- NEVER quote or paraphrase page copy unless the exact text appears in the scraped content provided
+- NEVER state a percentage or metric unless it is directly calculable from the scraped data (e.g. alt text ratio must be calculated from actual image count in scraped content, not estimated)
+- NEVER flag the current year copyright as outdated — if the copyright year matches the current calendar year it is correct and must not be flagged
+- NEVER describe a service as unique or premium unless the site explicitly positions it that way
+- Every finding must identify which specific page or element it was observed on — findings without a source are not verifiable and will be rejected
+- If you cannot find a specific verifiable issue, do not invent one — fewer accurate findings are better than more hallucinated ones
+
 Rules:
 - Use the technical signals heavily: reference actual meta titles, missing descriptions, schema types present or absent, platform name, image alt text stats, social links, copyright year, heading structure
 - Reference actual content, page names, copy, headlines, and structure you found
 - If a meta title is generic like "Home" or "Welcome", call it out specifically
 - If schema markup is missing, explain what types they should add (LocalBusiness, etc.)
-- If images lack alt text, give the exact percentage and explain the SEO impact
+- If images lack alt text, give the exact percentage and explain the SEO impact — only if the image count is from the scraped data
+- Only flag a feature as missing if you have checked all scraped pages and confirmed it does not appear on any of them. State which pages you checked.
 - High priority = likely costing them customers right now
 - Be direct and specific — this is a paid report, not a free summary
 - Recommendations should tell them exactly what to do, not vague suggestions. Example: "Rewrite your homepage H1 from 'Welcome' to '[City] [Service] — [Differentiator]'" instead of "Improve your headline"

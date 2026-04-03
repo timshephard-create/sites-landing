@@ -1,21 +1,21 @@
 const VALIDATION_TABLE = 'ValidationLog';
 
 /**
- * Fetch the last 5 validation corrections for a given content type.
+ * Fetch the last 10 validation rejections for a given content type.
  * Used to inject negative examples into generation prompts.
  */
 export async function getRecentCorrections(contentType) {
   try {
     const filter = encodeURIComponent(`{contentType}="${contentType}"`);
     const res = await fetch(
-      `https://api.airtable.com/v0/${process.env.AIRTABLE_BASE_ID}/${encodeURIComponent(VALIDATION_TABLE)}?filterByFormula=${filter}&maxRecords=20`,
+      `https://api.airtable.com/v0/${process.env.AIRTABLE_BASE_ID}/${encodeURIComponent(VALIDATION_TABLE)}?filterByFormula=${filter}&maxRecords=50`,
       { headers: { Authorization: `Bearer ${process.env.AIRTABLE_API_KEY}` } }
     );
     if (!res.ok) return [];
     const data = await res.json();
     return (data.records || [])
       .sort((a, b) => (b.fields.timestamp || '').localeCompare(a.fields.timestamp || ''))
-      .slice(0, 5)
+      .slice(0, 10)
       .map(r => ({ issues: r.fields.issues || '' }))
       .filter(r => r.issues);
   } catch (e) {
@@ -25,17 +25,17 @@ export async function getRecentCorrections(contentType) {
 }
 
 /**
- * Build a "RECENT CORRECTIONS" block to prepend to generation prompts.
- * Returns an empty string if there are no corrections to show.
+ * Build a "RECENT REJECTIONS" block to prepend to generation prompts.
+ * Returns an empty string if there are no rejections to show.
  */
 export function formatCorrectionsBlock(corrections) {
   if (!corrections.length) return '';
   const lines = corrections
     .flatMap(c => c.issues.split('\n').filter(Boolean))
-    .slice(0, 5)
+    .slice(0, 10)
     .map(line => `- ${line.trim()}`);
   if (!lines.length) return '';
-  return `RECENT CORRECTIONS — avoid repeating these mistakes:\n${lines.join('\n')}\n\n`;
+  return `RECENT REJECTIONS — these findings were rejected by the validator. Do NOT repeat these mistakes:\n${lines.join('\n')}\n\n`;
 }
 
 /**

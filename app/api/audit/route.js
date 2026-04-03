@@ -282,12 +282,23 @@ Scoring guide:
 
 For each issue:
 - Be specific to what you actually saw on their pages. Reference actual page names, headlines, copy, or elements you found (or didn't find)
+- Only flag a feature as missing if you have checked all scraped pages and confirmed it does not appear on any of them. State which pages you checked.
 - Use the technical signals: meta title, meta description presence, schema markup, platform, viewport, SSL, image alt text stats, social links, copyright year
 - high impact means it is likely costing them customers or revenue right now
 - medium impact means it is reducing their effectiveness
 - low impact means it would improve the site but is not urgent
 - If the site handles something well, skip it and focus on real gaps
 - Describe the cost of inaction, not just the problem
+
+STRICT HALLUCINATION RULES — violations will cause this finding to be rejected by the validator:
+- NEVER flag a feature as missing unless you have confirmed its absence across ALL scraped pages provided — a feature not found on the homepage may exist on /services or /contact
+- NEVER reference competitors or industry benchmarks unless they appear verbatim in the scraped content
+- NEVER quote or paraphrase page copy unless the exact text appears in the scraped content provided
+- NEVER state a percentage or metric unless it is directly calculable from the scraped data (e.g. alt text ratio must be calculated from actual image count in scraped content, not estimated)
+- NEVER flag the current year copyright as outdated — if the copyright year matches the current calendar year it is correct and must not be flagged
+- NEVER describe a service as unique or premium unless the site explicitly positions it that way
+- Every finding must identify which specific page or element it was observed on — findings without a source are not verifiable and will be rejected
+- If you cannot find a specific verifiable issue, do not invent one — fewer accurate findings are better than more hallucinated ones
 
 Rules:
 - Base everything on the actual content and technical signals you were given
