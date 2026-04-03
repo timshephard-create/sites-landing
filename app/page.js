@@ -669,8 +669,8 @@ export default function Home() {
       <section style={{ padding: '6rem 2rem', background: '#F7F3EE' }}>
         <div className="about-grid">
           <div>
-            <div style={{ width: '120px', height: '120px', borderRadius: '50%', background: '#C8522A', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '1.5rem' }}>
-              <span style={{ fontFamily: 'Georgia, serif', fontSize: '2rem', fontWeight: 700, color: '#fff', letterSpacing: '0.05em' }}>TS</span>
+            <div style={{ width: '120px', height: '120px', borderRadius: '50%', overflow: 'hidden', marginBottom: '1.5rem', flexShrink: 0 }}>
+              <img src="/tim-headshot.jpg" alt="Tim Shephard" style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center top' }} />
             </div>
             <p style={{ fontSize: '0.75rem', fontWeight: 500, letterSpacing: '0.12em', textTransform: 'uppercase', color: '#C8522A', marginBottom: '1rem' }}>Who I am</p>
             <h2 style={{ fontFamily: 'Georgia, serif', fontSize: 'clamp(2rem, 4vw, 3rem)', lineHeight: 1.2, marginBottom: '0.75rem' }}>A Creative Director.<br />Based right here<br />in DFW.</h2>
