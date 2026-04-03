@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { validateContent, logValidation, getRecentCorrections, formatCorrectionsBlock } from '../_lib/validator.js';
 
 export const maxDuration = 300;
 
@@ -384,13 +385,16 @@ ${subpageSignalsSummary || 'No subpage signals extracted'}
 === PAGE CONTENT ===
 ${combinedContent}`;
 
-  // Run audit and mockup generation in parallel
+  // Fetch recent corrections and run generation in parallel
   console.log('[REPORT] Pages crawled:', Object.keys(siteData).join(', '));
   console.log('[REPORT] Starting AI generation (report + mockup in parallel)...');
   const aiStart = Date.now();
 
+  const recentCorrections = await getRecentCorrections('paid-audit');
+  const correctionsBlock = formatCorrectionsBlock(recentCorrections);
+
   const [reportResult, mockupResult] = await Promise.allSettled([
-    generateReport(url, fullPromptContent, Object.keys(siteData)),
+    generateReport(url, fullPromptContent, Object.keys(siteData), correctionsBlock),
     generateMockup(url, siteData['homepage'] || '', allPageSignals['homepage'] || {})
   ]);
 
@@ -398,7 +402,7 @@ ${combinedContent}`;
   console.log('[REPORT] Report result:', reportResult.status, reportResult.status === 'rejected' ? reportResult.reason?.message : '');
   console.log('[REPORT] Mockup result:', mockupResult.status, mockupResult.status === 'rejected' ? mockupResult.reason?.message : '');
 
-  const report = reportResult.status === 'fulfilled' ? reportResult.value : null;
+  let report = reportResult.status === 'fulfilled' ? reportResult.value : null;
   const mockupHtml = mockupResult.status === 'fulfilled' ? mockupResult.value : null;
 
   if (!report) {
@@ -408,6 +412,39 @@ ${combinedContent}`;
   }
 
   console.log('[REPORT] Report score:', report.score, '| Grade:', report.grade, '| Sections:', report.sections?.length);
+
+  // Validate report findings against scraped data
+  const businessName = allPageSignals['homepage']?.metaTitle || url;
+  const originalReport = JSON.parse(JSON.stringify(report));
+  const validation = await validateContent({
+    contentType: 'paid-audit',
+    businessName,
+    website: url,
+    generatedContent: report,
+    scrapedData: fullPromptContent
+  });
+  if (validation.valid) {
+    console.log('[validator] ✓ paid-audit passed');
+  } else {
+    if (validation.correctedContent) {
+      try {
+        report = JSON.parse(validation.correctedContent);
+        console.log(`[validator] ✗ ${validation.issues.length} issue(s) — auto-corrected`);
+      } catch {
+        console.log('[validator] ✗ correction parse failed — using original');
+      }
+    } else {
+      console.log('[validator] ✗ uncorrectable — fallback used');
+    }
+    logValidation({
+      contentType: 'paid-audit',
+      businessName,
+      website: url,
+      original: originalReport,
+      issues: validation.issues,
+      corrected: validation.correctedContent
+    }).catch(() => {});
+  }
 
   // Screenshot the mockup
   let mockupImageData = null;
@@ -433,8 +470,8 @@ ${combinedContent}`;
   return NextResponse.json({ success: true });
 }
 
-async function generateReport(url, fullPromptContent, pagesCrawled) {
-  const systemPrompt = `You are a senior website strategist delivering a paid audit report to a small business owner. This is a premium $147 report — it should be thorough, specific, and genuinely useful. You have crawled multiple pages of their site and have both the page content AND detailed technical signals extracted from the HTML.
+async function generateReport(url, fullPromptContent, pagesCrawled, correctionsBlock = '') {
+  const systemPrompt = `${correctionsBlock}You are a senior website strategist delivering a paid audit report to a small business owner. This is a premium $147 report — it should be thorough, specific, and genuinely useful. You have crawled multiple pages of their site and have both the page content AND detailed technical signals extracted from the HTML.
 
 Return a JSON object with this exact structure:
 {

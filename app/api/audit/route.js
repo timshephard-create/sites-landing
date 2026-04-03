@@ -1,3 +1,5 @@
+import { validateContent, logValidation, getRecentCorrections, formatCorrectionsBlock } from '../_lib/validator.js';
+
 export const maxDuration = 300;
 
 /**
@@ -258,7 +260,10 @@ ${signalsSummary}
 === PAGE CONTENT ===
 ${combinedContent}`;
 
-  const systemPrompt = `You are a website advisor helping local business owners understand how their website is performing. Your tone is that of a knowledgeable friend — honest, clear, never condescending, never salesy. You have crawled multiple pages of their website and have both the page content AND technical signals extracted from the HTML.
+  const recentCorrections = await getRecentCorrections('free-audit');
+  const correctionsBlock = formatCorrectionsBlock(recentCorrections);
+
+  const systemPrompt = `${correctionsBlock}You are a website advisor helping local business owners understand how their website is performing. Your tone is that of a knowledgeable friend — honest, clear, never condescending, never salesy. You have crawled multiple pages of their website and have both the page content AND technical signals extracted from the HTML.
 
 Return a JSON object with this exact structure:
 {
@@ -301,7 +306,7 @@ Rules:
         'anthropic-version': '2023-06-01'
       },
       body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
+        model: 'claude-sonnet-4-5',
         max_tokens: 1500,
         system: systemPrompt,
         messages: [{
@@ -329,6 +334,39 @@ Rules:
       return Response.json({ error: 'Audit failed — unexpected response format' }, { status: 500 });
     }
 
+    // Validate findings against scraped data
+    const businessName = homepageSignals.metaTitle || url;
+    const originalAudit = JSON.parse(JSON.stringify(audit));
+    const validation = await validateContent({
+      contentType: 'free-audit',
+      businessName,
+      website: url,
+      generatedContent: audit,
+      scrapedData: fullPromptContent
+    });
+    if (validation.valid) {
+      console.log('[validator] ✓ free-audit passed');
+    } else {
+      if (validation.correctedContent) {
+        try {
+          audit = JSON.parse(validation.correctedContent);
+          console.log(`[validator] ✗ ${validation.issues.length} issue(s) — auto-corrected`);
+        } catch {
+          console.log('[validator] ✗ correction parse failed — using original');
+        }
+      } else {
+        console.log('[validator] ✗ uncorrectable — fallback used');
+      }
+      logValidation({
+        contentType: 'free-audit',
+        businessName,
+        website: url,
+        original: originalAudit,
+        issues: validation.issues,
+        corrected: validation.correctedContent
+      }).catch(() => {});
+    }
+
     let teaserImageUrl = null;
     if (audit.industry) {
       try {
@@ -340,7 +378,7 @@ Rules:
             'anthropic-version': '2023-06-01'
           },
           body: JSON.stringify({
-            model: 'claude-sonnet-4-20250514',
+            model: 'claude-sonnet-4-5',
             max_tokens: 4000,
             messages: [{
               role: 'user',
