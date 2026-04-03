@@ -454,9 +454,9 @@ function formatSignals(signals) {
   if (signals.copyrightYear) {
     const currentYear = new Date().getFullYear();
     if (parseInt(signals.copyrightYear) < currentYear) {
-      lines.push(`Copyright year: ${signals.copyrightYear} (OUTDATED — currently ${currentYear})`);
+      lines.push(`Copyright year: ${signals.copyrightYear} (OUTDATED — current year is ${currentYear})`);
     } else {
-      lines.push(`Copyright year: ${signals.copyrightYear}`);
+      lines.push(`Copyright year: ${signals.copyrightYear} (current — up to date)`);
     }
   }
 
