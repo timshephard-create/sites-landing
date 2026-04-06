@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { validateContent, logValidation, getRecentCorrections, formatCorrectionsBlock } from '../_lib/validator.js';
+import { validateContent, validateMockupContent, logValidation, getRecentCorrections, formatCorrectionsBlock } from '../_lib/validator.js';
 
 export const maxDuration = 300;
 
@@ -347,11 +347,16 @@ export async function POST(request) {
       })
     );
 
+    const unreliablePages = [];
     for (const result of pageResults) {
       if (result.status === 'fulfilled' && result.value.content) {
         const { pageName, content } = result.value;
-        siteData[pageName] = content.clean;
-        allPageSignals[pageName] = content.signals;
+        if (content.clean && content.clean.length < 200) {
+          unreliablePages.push(pageName);
+        } else {
+          siteData[pageName] = content.clean;
+          allPageSignals[pageName] = content.signals;
+        }
       }
     }
   } catch(e) {
@@ -372,8 +377,12 @@ export async function POST(request) {
     .map(([page, content]) => `=== ${page.toUpperCase()} ===\n${content}`)
     .join('\n\n');
 
+  const unreliableNote = unreliablePages.length
+    ? `\nUnreliable scrapes (returned < 200 chars, do NOT base findings on these): ${unreliablePages.join(', ')}`
+    : '';
+
   const fullPromptContent = `Website URL: ${url}
-Pages crawled: ${Object.keys(siteData).join(', ')}
+Pages crawled: ${Object.keys(siteData).join(', ')}${unreliableNote}
 Total pages discovered: ${Object.keys(siteData).length}
 
 === HOMEPAGE TECHNICAL SIGNALS ===
@@ -403,7 +412,15 @@ ${combinedContent}`;
   console.log('[REPORT] Mockup result:', mockupResult.status, mockupResult.status === 'rejected' ? mockupResult.reason?.message : '');
 
   let report = reportResult.status === 'fulfilled' ? reportResult.value : null;
-  const mockupHtml = mockupResult.status === 'fulfilled' ? mockupResult.value : null;
+  let mockupHtml = mockupResult.status === 'fulfilled' ? mockupResult.value : null;
+
+  // Validate paid mockup for fabricated specifics
+  if (mockupHtml) {
+    const mockupValidation = await validateMockupContent({ mockupHtml, scrapedData: fullPromptContent, businessName: allPageSignals['homepage']?.metaTitle || url });
+    if (!mockupValidation.valid) {
+      console.log('[mockup-validator] ✗ paid mockup had fabricated content:', mockupValidation.issues.join('; '));
+    }
+  }
 
   if (!report) {
     const reason = reportResult.status === 'rejected' ? reportResult.reason?.message : 'Unknown error';
@@ -442,7 +459,8 @@ ${combinedContent}`;
       website: url,
       original: originalReport,
       issues: validation.issues,
-      corrected: validation.correctedContent
+      corrected: validation.correctedContent,
+      industry: report.industry || ''
     }).catch(() => {});
   }
 
@@ -501,6 +519,8 @@ STRICT HALLUCINATION RULES — violations will cause this finding to be rejected
 - NEVER describe a service as unique or premium unless the site explicitly positions it that way
 - Every finding must identify which specific page or element it was observed on — findings without a source are not verifiable and will be rejected
 - If you cannot find a specific verifiable issue, do not invent one — fewer accurate findings are better than more hallucinated ones
+- NEVER generate percentage improvements, revenue estimates, or conversion claims in the "impact" field unless a specific number appears in the scraped data — describe what the fix enables functionally, not speculative metrics. Correct: "Allows potential clients to see results before booking". Violation: "Could increase conversions by 30%"
+- NEVER embed percentage claims, traffic estimates, or revenue figures in findings or descriptions unless the number is directly calculable from the scraped data
 
 Rules:
 - Use the technical signals heavily: reference actual meta titles, missing descriptions, schema types present or absent, platform name, image alt text stats, social links, copyright year, heading structure

@@ -1,4 +1,4 @@
-import { validateContent, logValidation, getRecentCorrections, formatCorrectionsBlock } from '../_lib/validator.js';
+import { validateContent, validateMockupContent, logValidation, getRecentCorrections, formatCorrectionsBlock } from '../_lib/validator.js';
 
 export const maxDuration = 300;
 
@@ -114,7 +114,7 @@ function extractSignals(html, pageUrl) {
 /**
  * Clean HTML to plain text for body content analysis.
  */
-function cleanHtml(html, maxLength = 2000) {
+function cleanHtml(html, maxLength = 5000) {
   return html
     .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '')
     .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '')
@@ -235,9 +235,14 @@ export async function POST(request) {
       })
     );
 
+    const unreliablePages = [];
     for (const result of pageResults) {
       if (result.status === 'fulfilled' && result.value.content.clean) {
-        siteData[result.value.pageName] = result.value.content.clean;
+        if (result.value.content.clean.length < 200) {
+          unreliablePages.push(result.value.pageName);
+        } else {
+          siteData[result.value.pageName] = result.value.content.clean;
+        }
       }
     }
   } catch(e) {
@@ -251,8 +256,12 @@ export async function POST(request) {
     .map(([page, content]) => `=== ${page.toUpperCase()} ===\n${content}`)
     .join('\n\n');
 
+  const unreliableNote = unreliablePages.length
+    ? `\nUnreliable scrapes (returned < 200 chars, do NOT base findings on these): ${unreliablePages.join(', ')}`
+    : '';
+
   const fullPromptContent = `Website URL: ${url}
-Pages crawled: ${Object.keys(siteData).join(', ')}
+Pages crawled: ${Object.keys(siteData).join(', ')}${unreliableNote}
 
 === TECHNICAL SIGNALS (extracted from HTML) ===
 ${signalsSummary}
@@ -299,6 +308,7 @@ STRICT HALLUCINATION RULES — violations will cause this finding to be rejected
 - NEVER describe a service as unique or premium unless the site explicitly positions it that way
 - Every finding must identify which specific page or element it was observed on — findings without a source are not verifiable and will be rejected
 - If you cannot find a specific verifiable issue, do not invent one — fewer accurate findings are better than more hallucinated ones
+- NEVER embed percentage claims, traffic estimates, or revenue figures in issue descriptions unless the number is directly calculable from the scraped data — describe the problem and its functional cost, not speculative metrics
 
 Rules:
 - Base everything on the actual content and technical signals you were given
@@ -374,7 +384,8 @@ Rules:
         website: url,
         original: originalAudit,
         issues: validation.issues,
-        corrected: validation.correctedContent
+        corrected: validation.correctedContent,
+        industry: audit.industry || ''
       }).catch(() => {});
     }
 
@@ -391,9 +402,30 @@ Rules:
           body: JSON.stringify({
             model: 'claude-sonnet-4-5',
             max_tokens: 4000,
+            system: `You are an expert web designer creating a best-practice example homepage for a ${audit.industry} business. This is an illustrative mockup showing what a high-converting site in this industry looks like — it is NOT a representation of the client's actual business.
+
+Requirements:
+- Use only inline styles (no external CSS files)
+- Use Google Fonts via a single <link> tag (pick one elegant font appropriate for the business type)
+- Include a fixed navigation bar with a generic business name and a CTA button
+- Include a hero section with a compelling headline, subheadline, and CTA button
+- Include a services/features section with 3 cards
+- Include a trust/social proof section (stats bar or generic social proof — NOT fabricated testimonials with specific names)
+- Include a final CTA section
+- Use a cohesive color palette that fits the business type
+- Make it look like a real $5,000 website — professional, modern, conversion-focused
+- Do not use any external images — use CSS gradients or solid colors for backgrounds
+
+STRICT RULES:
+- NEVER invent specific testimonials with named people (no "John S. said..." or fake review quotes)
+- NEVER invent specific phone numbers, street addresses, or email addresses
+- NEVER invent specific service prices or dollar amounts
+- NEVER invent specific staff or team member names
+- Use generic placeholders where specifics would normally go (e.g. "Your Business Name", "[City, State]")
+- Return ONLY the complete HTML starting with <!DOCTYPE html>, no explanation, no markdown backticks`,
             messages: [{
               role: 'user',
-              content: `Generate a single clean, modern, high-converting homepage design for a ${audit.industry} business as a complete self-contained HTML file. Requirements: inline styles only, no external CSS, use Google Fonts via a single link tag, fixed navigation bar with logo and CTA button, hero section with compelling headline and CTA, services section with 3 cards, trust/social proof section, final CTA section. Use a cohesive professional color palette. Page should look like a real $5,000 website. Return ONLY the complete HTML starting with <!DOCTYPE html>, no explanation, no markdown backticks.`
+              content: `Generate a best-practice ${audit.industry} homepage mockup. Business name: ${businessName || 'Sample Business'}.`
             }]
           })
         });
@@ -401,8 +433,14 @@ Rules:
           const mockupData = await mockupRes.json();
           const rawMockup = mockupData.content?.[0]?.text || '';
           // Strip markdown code fences Claude often wraps around HTML
-          const mockupHtml = rawMockup.replace(/```html|```/g, '').trim();
+          let mockupHtml = rawMockup.replace(/```html|```/g, '').trim();
+          // Fix 4: validate mockup for fabricated specifics
           if (mockupHtml) {
+            const mockupValidation = await validateMockupContent({ mockupHtml, scrapedData: fullPromptContent, businessName });
+            if (!mockupValidation.valid) {
+              console.log('[mockup-validator] ✗ free mockup had fabricated content:', mockupValidation.issues.join('; '));
+              // Still use the mockup but log the issue — stripping individual elements is fragile
+            }
             teaserImageUrl = await screenshotHtml(mockupHtml);
           }
         }
