@@ -15,7 +15,9 @@ export default function Home() {
   const [turnstileToken, setTurnstileToken] = useState('');
   const [psiData, setPsiData] = useState(null);
   const [recentAudits, setRecentAudits] = useState([]);
+  const [loadingProgress, setLoadingProgress] = useState(0);
   const auditInFlight = useRef(false);
+  const auditDataRef = useRef(null);
   const turnstileRef = useRef(null);
   const turnstileWidgetId = useRef(null);
   const scoredSectionRef = useRef(null);
@@ -71,6 +73,19 @@ export default function Home() {
       script.onload = renderWidget;
       document.head.appendChild(script);
     }
+  }, [step]);
+
+  useEffect(() => {
+    if (step !== 'loading') { setLoadingProgress(0); return; }
+    setLoadingProgress(0);
+    const interval = setInterval(() => {
+      setLoadingProgress(prev => {
+        if (prev >= 100) return prev;
+        if (prev < 85) return prev + (85 - prev) * 0.012;
+        return prev;
+      });
+    }, 100);
+    return () => clearInterval(interval);
   }, [step]);
 
   const handleUrlSubmit = async () => {
@@ -157,6 +172,7 @@ export default function Home() {
     auditInFlight.current = true;
     setError('');
     setStep('loading');
+    window.scrollTo({ top: 0, behavior: 'instant' });
     try {
       const res = await fetch('/api/audit', {
         method: 'POST',
@@ -165,6 +181,9 @@ export default function Home() {
       });
       const data = await res.json();
       if (data.error) throw new Error(data.error);
+      auditDataRef.current = { audit: data.audit, pagesCrawled: data.pagesCrawled || [] };
+      setLoadingProgress(100);
+      await new Promise(r => setTimeout(r, 400));
       setAudit(data.audit);
       setPagesCrawled(data.pagesCrawled || []);
       setStep('results');
@@ -390,9 +409,13 @@ export default function Home() {
           )}
 
           {step === 'loading' && (
-            <div style={{ textAlign: 'center', padding: '3rem' }}>
-              <div style={{ width: '40px', height: '40px', border: '3px solid #e8e4df', borderTopColor: '#C8522A', borderRadius: '50%', animation: 'spin 0.8s linear infinite', margin: '0 auto 1.5rem' }} />
-              <p style={{ color: '#4A4540', fontSize: '0.95rem' }}>Building your free audit report...</p>
+            <div style={{ padding: '3rem 0' }}>
+              <p style={{ fontSize: '0.95rem', color: '#4A4540', marginBottom: '1rem', textAlign: 'center' }}>
+                {Math.round(loadingProgress)}% — {loadingProgress < 25 ? 'Checking site speed...' : loadingProgress < 50 ? 'Analyzing SEO signals...' : loadingProgress < 75 ? 'Scanning for revenue leaks...' : loadingProgress < 100 ? 'Writing your report...' : 'Done — loading your results'}
+              </p>
+              <div style={{ width: '100%', height: '8px', borderRadius: '4px', background: 'rgba(26,23,20,0.08)' }}>
+                <div style={{ width: `${Math.min(loadingProgress, 100)}%`, height: '100%', borderRadius: '4px', background: '#C8522A', transition: 'width 0.1s ease-out' }} />
+              </div>
             </div>
           )}
 
