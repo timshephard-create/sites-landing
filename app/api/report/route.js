@@ -306,6 +306,7 @@ export async function POST(request) {
   let siteData = {};
   let allPageSignals = {};
   let rawHomepage = '';
+  const unreliablePages = [];
 
   try {
     // Fetch homepage and sitemap in parallel
@@ -347,7 +348,6 @@ export async function POST(request) {
       })
     );
 
-    const unreliablePages = [];
     for (const result of pageResults) {
       if (result.status === 'fulfilled' && result.value.content) {
         const { pageName, content } = result.value;

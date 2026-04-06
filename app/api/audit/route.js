@@ -210,6 +210,7 @@ export async function POST(request) {
   let siteData = {};
   let homepageSignals = {};
   let rawHomepageHtml = '';
+  const unreliablePages = [];
 
   try {
     const homePage = await fetchPage(url);
@@ -235,7 +236,6 @@ export async function POST(request) {
       })
     );
 
-    const unreliablePages = [];
     for (const result of pageResults) {
       if (result.status === 'fulfilled' && result.value.content.clean) {
         if (result.value.content.clean.length < 200) {
