@@ -86,6 +86,7 @@ export default function Home() {
     }
     setError('');
     setStep('scoring');
+    setTimeout(() => document.getElementById('audit')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 100);
 
     try {
       const controller = new AbortController();
@@ -251,19 +252,35 @@ export default function Home() {
       </nav>
 
       {/* HERO */}
-      <section style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '8rem 2rem 5rem', maxWidth: '1100px', margin: '0 auto' }}>
+      <section className="hero-section" style={{ display: 'flex', flexDirection: 'column', padding: '7rem 2rem 3rem', maxWidth: '1100px', margin: '0 auto' }}>
         <p style={{ fontSize: '0.78rem', fontWeight: 500, letterSpacing: '0.12em', textTransform: 'uppercase', color: '#C8522A', marginBottom: '1.5rem' }}>Free website score card — DFW businesses</p>
-        <h1 style={{ fontFamily: 'Georgia, serif', fontSize: 'clamp(2.8rem, 6vw, 5.5rem)', lineHeight: 1.1, fontWeight: 700, maxWidth: '18ch', marginBottom: '1.75rem' }}>
+        <h1 className="hero-headline" style={{ fontFamily: 'Georgia, serif', fontSize: 'clamp(2.8rem, 6vw, 5.5rem)', lineHeight: 1.1, fontWeight: 700, maxWidth: '18ch', marginBottom: '1rem' }}>
           Find out what your website is costing you. Free. In 60 seconds.
         </h1>
-        <p style={{ fontSize: '1.15rem', color: '#4A4540', maxWidth: '46ch', lineHeight: 1.75, marginBottom: '2.5rem', fontWeight: 300 }}>
+        <p className="hero-subtext" style={{ fontSize: '1.15rem', color: '#4A4540', maxWidth: '46ch', lineHeight: 1.75, marginBottom: '1.5rem', fontWeight: 300 }}>
           Get an honest 5-point score card built for DFW small businesses. No fluff, no sales pitch — just the truth about your site.
         </p>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem', flexWrap: 'wrap', marginBottom: '2.5rem' }}>
-          <a href="#audit" style={{ background: '#C8522A', color: '#fff', padding: '1rem 2.2rem', borderRadius: '2px', fontSize: '0.95rem', textDecoration: 'none', minHeight: '52px', display: 'inline-flex', alignItems: 'center' }}>
-            See how your site scores →
-          </a>
-          <span style={{ fontSize: '0.82rem', color: '#9A9490' }}>Free · Takes 30 seconds · No commitment</span>
+        <div style={{ maxWidth: '480px', marginBottom: '1.5rem' }}>
+          <style>{`
+            .hero-input-row { display: flex; gap: 0.75rem; }
+            .hero-url-input { flex: 1; padding: 0.9rem 1rem; border: 1px solid #ddd; border-radius: 2px; font-size: 0.95rem; font-family: Georgia, serif; background: #fff; color: #1A1714; min-height: 52px; box-sizing: border-box; }
+            .hero-audit-btn { background: #C8522A; color: #fff; border: none; padding: 0.9rem 2rem; border-radius: 2px; font-size: 0.95rem; cursor: pointer; font-family: Georgia, serif; white-space: nowrap; min-height: 52px; }
+            @media (max-width: 480px) { .hero-input-row { flex-direction: column; } .hero-url-input { width: 100%; } .hero-audit-btn { width: 100%; } }
+          `}</style>
+          <div className="hero-input-row">
+            <input
+              value={url}
+              onChange={e => setUrl(e.target.value)}
+              placeholder="https://yourbusiness.com"
+              onKeyDown={e => e.key === 'Enter' && handleUrlSubmit()}
+              className="hero-url-input"
+            />
+            <button onClick={handleUrlSubmit} className="hero-audit-btn">
+              Audit my site
+            </button>
+          </div>
+          {error && step === 'idle' && <p style={{ color: '#993C1D', fontSize: '0.85rem', marginTop: '0.5rem' }}>{error}</p>}
+          <p style={{ fontSize: '0.82rem', color: '#9A9490', marginTop: '0.75rem' }}>Free · No account needed · Results in 60 seconds</p>
         </div>
 
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem', maxWidth: '780px' }}
@@ -278,18 +295,30 @@ export default function Home() {
             </div>
           ))}
         </div>
-        <style>{`.hero-testimonial-grid { grid-template-columns: 1fr 1fr; } @media (max-width: 600px) { .hero-testimonial-grid { grid-template-columns: 1fr; } }`}</style>
+        <style>{`
+          .hero-testimonial-grid { grid-template-columns: 1fr 1fr; }
+          @media (max-width: 600px) {
+            .hero-section { padding-top: 5.5rem !important; padding-bottom: 2rem !important; }
+            .hero-headline { font-size: 2.2rem !important; }
+            .hero-subtext { font-size: 0.95rem !important; line-height: 1.5 !important; }
+            .hero-testimonial-grid { grid-template-columns: 1fr; }
+          }
+        `}</style>
       </section>
 
       {/* AUDIT WIDGET */}
-      <section id="audit" style={{ padding: '6rem 2rem', maxWidth: '700px', margin: '0 auto' }}>
-        <p style={{ fontSize: '0.75rem', fontWeight: 500, letterSpacing: '0.12em', textTransform: 'uppercase', color: '#C8522A', marginBottom: '1rem' }}>Free website audit</p>
-        <h2 style={{ fontFamily: 'Georgia, serif', fontSize: 'clamp(2rem, 4vw, 3rem)', lineHeight: 1.2, marginBottom: '1rem' }}>Most local business websites are losing customers every day. Is yours?</h2>
-        <p style={{ fontSize: '1rem', color: '#4A4540', lineHeight: 1.8, marginBottom: '2.5rem', fontWeight: 300 }}>
-          Type in your URL. We'll score your site on speed, mobile, SEO, trust, and revenue leaks — and send you the full breakdown free.
-        </p>
+      <section id="audit" style={{ padding: step === 'idle' ? '0 2rem' : '6rem 2rem', maxWidth: '700px', margin: '0 auto' }}>
+        {step !== 'idle' && (
+          <>
+            <p style={{ fontSize: '0.75rem', fontWeight: 500, letterSpacing: '0.12em', textTransform: 'uppercase', color: '#C8522A', marginBottom: '1rem' }}>Free website audit</p>
+            <h2 style={{ fontFamily: 'Georgia, serif', fontSize: 'clamp(2rem, 4vw, 3rem)', lineHeight: 1.2, marginBottom: '1rem' }}>Most local business websites are losing customers every day. Is yours?</h2>
+            <p style={{ fontSize: '1rem', color: '#4A4540', lineHeight: 1.8, marginBottom: '2.5rem', fontWeight: 300 }}>
+              Type in your URL. We'll score your site on speed, mobile, SEO, trust, and revenue leaks — and send you the full breakdown free.
+            </p>
+          </>
+        )}
 
-        {step === 'idle' && (
+        {(step === 'scoring' || step === 'scored' || step === 'email') && (
           <div>
             {/* 3-STEP JOURNEY INDICATOR */}
             <div style={{ marginBottom: '2rem', border: '1px solid #e8e4df', borderRadius: '4px', overflow: 'hidden', background: '#fff' }}>
@@ -312,26 +341,8 @@ export default function Home() {
               ))}
             </div>
 
-            <p style={{ fontSize: '0.82rem', color: '#9A9490', lineHeight: 1.6, marginBottom: '1rem', fontWeight: 300 }}>57% of users won't recommend a business with a poorly designed mobile site. Here's how yours stacks up.</p>
-            <style>{`
-              .audit-input-row { display: flex; gap: 0.75rem; flex-wrap: wrap; }
-              .audit-url-input { flex: 1; padding: 0.9rem 1rem; border: 1px solid #ddd; border-radius: 2px; font-size: 0.95rem; font-family: Georgia, serif; min-width: 200px; background: #fff; color: #1A1714; min-height: 52px; box-sizing: border-box; }
-              .audit-btn { background: #C8522A; color: #fff; border: none; padding: 0.9rem 2rem; border-radius: 2px; font-size: 0.95rem; cursor: pointer; font-family: Georgia, serif; white-space: nowrap; min-height: 52px; }
-              @media (max-width: 480px) { .audit-btn { width: 100%; } .audit-url-input { width: 100%; } }
-            `}</style>
-            <div className="audit-input-row">
-              <input
-                value={url}
-                onChange={e => setUrl(e.target.value)}
-                placeholder="https://yourbusiness.com"
-                onKeyDown={e => e.key === 'Enter' && handleUrlSubmit()}
-                className="audit-url-input"
-              />
-              <button onClick={handleUrlSubmit} className="audit-btn">
-                Audit my site
-              </button>
-            </div>
-            {error && <p style={{ color: '#993C1D', fontSize: '0.85rem', marginTop: '0.5rem' }}>{error}</p>}
+
+
           </div>
         )}
 
@@ -749,11 +760,11 @@ export default function Home() {
       </footer>
 
       {/* MOBILE STICKY CTA — visible after 300px scroll, hidden once audit has been run */}
-      {showSticky && !stickyDismissed && step === 'idle' && (
+      {showSticky && !stickyDismissed && (step === 'scored' || step === 'results') && (
         <div style={{ position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 200, background: '#1A1714', borderTop: '1px solid rgba(255,255,255,0.1)', padding: '0.85rem 1.25rem', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-          <a href="#audit" style={{ flex: 1, display: 'block', background: '#C8522A', color: '#fff', padding: '0.85rem 1rem', borderRadius: '2px', fontSize: '0.9rem', textDecoration: 'none', textAlign: 'center', fontFamily: 'Georgia, serif' }}>
-            See how your site scores →
-          </a>
+          <button onClick={handleCheckout} style={{ flex: 1, background: '#C8522A', color: '#fff', border: 'none', padding: '0.85rem 1rem', borderRadius: '2px', fontSize: '0.9rem', textAlign: 'center', fontFamily: 'Georgia, serif', cursor: 'pointer' }}>
+            Get My Full Audit Report — $147
+          </button>
           <button onClick={() => setStickyDismissed(true)} aria-label="Dismiss" style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.4)', cursor: 'pointer', fontSize: '1.2rem', padding: '0.5rem', lineHeight: 1, flexShrink: 0 }}>
             ✕
           </button>
