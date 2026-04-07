@@ -3,6 +3,7 @@
 const cards = [
   {
     niche: 'MEDSPA',
+    image: '/mockup-medspa.png',
     headline: 'Radiance Med Spa',
     problem: 'Coupon-led, template-pink, and five years out of date.',
     wins: ['Editorial noir redesign', 'Single book CTA', 'Press authority strip'],
@@ -22,6 +23,7 @@ const cards = [
   },
   {
     niche: 'DENTAL',
+    image: '/mockup-dental.png',
     headline: 'Cornerstone Family Dental',
     problem: 'Cold blue template. Doctor buried. Reviews hidden in a sidebar.',
     wins: ['Warm boutique palette', 'Doctor-forward hero', 'Trust above the fold'],
@@ -41,6 +43,7 @@ const cards = [
   },
   {
     niche: 'HVAC',
+    image: '/mockup-hvac.png',
     headline: 'Apex Air & Heat',
     problem: 'All-caps chaos, six badge claims, and a coupon where the CTA should be.',
     wins: ['Bold trade authority', 'Emergency bar urgency', 'License callouts above fold'],
@@ -119,12 +122,19 @@ export default function SocialProofBlock() {
           <div key={card.niche} style={{
             background: card.bg,
             borderRadius: '4px',
-            padding: '2rem 1.75rem',
+            overflow: 'hidden',
             display: 'flex',
             flexDirection: 'column',
-            gap: '1rem',
             border: `1px solid ${card.niche === 'DENTAL' ? '#e2ddd4' : 'rgba(255,255,255,0.06)'}`,
           }}>
+            {/* Mockup thumbnail */}
+            <img
+              src={card.image}
+              alt={`${card.headline} redesign`}
+              style={{ width: '100%', height: '200px', objectFit: 'cover', objectPosition: 'top', display: 'block' }}
+            />
+            {/* Card content */}
+            <div style={{ padding: '1.25rem 1.75rem 1.75rem', display: 'flex', flexDirection: 'column', gap: '1rem', flex: 1 }}>
             {/* Niche pill */}
             <span style={{
               fontFamily: "'DM Mono', monospace",
@@ -179,6 +189,7 @@ export default function SocialProofBlock() {
                   {win}
                 </span>
               ))}
+            </div>
             </div>
           </div>
         ))}
