@@ -282,12 +282,10 @@ export default function Home() {
           .email-btn { background: #C8522A; color: #fff; border: none; padding: 0.9rem 1.75rem; border-radius: 2px; font-size: 0.95rem; cursor: pointer; font-family: Georgia, serif; white-space: nowrap; min-height: 52px; }
           @keyframes spin { to { transform: rotate(360deg); } }
           @media (max-width: 480px) { .hero-input-row { flex-direction: column; } .hero-url-input { width: 100%; } .hero-audit-btn { width: 100%; } .email-btn { width: 100%; } .email-input { width: 100%; } }
-          .hero-testimonial-grid { grid-template-columns: 1fr 1fr; }
           @media (max-width: 600px) {
             .hero-section { padding-top: 5.5rem !important; padding-bottom: 2rem !important; }
             .hero-headline { font-size: 2.2rem !important; }
             .hero-subtext { font-size: 0.95rem !important; line-height: 1.5 !important; }
-            .hero-testimonial-grid { grid-template-columns: 1fr; }
           }
         `}</style>
 
@@ -552,20 +550,6 @@ export default function Home() {
           )}
         </div>
 
-        {(step === 'idle' || step === 'scoring') && (
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem', maxWidth: '780px', marginTop: '1.5rem' }}
-            className="hero-testimonial-grid">
-            {[
-              { quote: 'He took responsibility for the brand, completely overhauled the website, and succeeded with almost no budget on a very tight timeframe. I can recommend Tim without hesitation.', name: 'Noah Ullman', title: 'CMO · Keep America Beautiful' },
-              { quote: 'Tim is the total package: Concept, Design, Execution, Polish, Delivery. I was able to depend upon him when deadlines were looming and odds were against us for completing goals on time.', name: 'Nathan McCall', title: 'Pali Camp' },
-            ].map(({ quote, name, title }) => (
-              <div key={name}>
-                <p style={{ fontFamily: 'Georgia, serif', fontSize: '0.95rem', fontStyle: 'italic', color: '#4A4540', lineHeight: 1.75, margin: '0 0 0.6rem' }}>&ldquo;{quote}&rdquo;</p>
-                <p style={{ fontSize: '0.82rem', color: '#9A9490', margin: 0 }}>— {name}{title ? `, ${title}` : ''}</p>
-              </div>
-            ))}
-          </div>
-        )}
       </section>
 
       <SocialProofBlock />
