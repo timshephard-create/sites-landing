@@ -1,5 +1,6 @@
 'use client';
 import { useState, useEffect, useRef } from 'react';
+import SocialProofBlock from './components/SocialProofBlock';
 
 export default function Home() {
   const [url, setUrl] = useState('');
@@ -566,6 +567,8 @@ export default function Home() {
           </div>
         )}
       </section>
+
+      <SocialProofBlock />
 
       {/* AUDIT WIDGET — anchor only, all rendering moved to hero */}
       <div id="audit" />
