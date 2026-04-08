@@ -12,6 +12,7 @@ export default function FreeAuditLanding() {
   const [psiData, setPsiData] = useState(null);
   const [loadingProgress, setLoadingProgress] = useState(0);
   const auditInFlight = useRef(false);
+  const progressTimer = useRef(null);
   const turnstileRef = useRef(null);
   const turnstileWidgetId = useRef(null);
   const urlInputRef = useRef(null);
@@ -57,14 +58,29 @@ export default function FreeAuditLanding() {
   useEffect(() => {
     if (step !== 'auditing') { setLoadingProgress(0); return; }
     setLoadingProgress(0);
-    const interval = setInterval(() => {
-      setLoadingProgress(prev => {
-        if (prev >= 100) return prev;
-        if (prev < 85) return prev + (85 - prev) * 0.012;
-        return prev;
-      });
-    }, 100);
-    return () => clearInterval(interval);
+    const start = Date.now();
+    // Phase 1: ease to 72% over 8 seconds
+    const phase1 = setInterval(() => {
+      const elapsed = (Date.now() - start) / 1000;
+      if (elapsed >= 8) {
+        clearInterval(phase1);
+        setLoadingProgress(72);
+        // Phase 2: creep 0.5% every 800ms, cap at 96%
+        progressTimer.current = setInterval(() => {
+          setLoadingProgress(prev => prev >= 96 ? prev : prev + 0.5);
+        }, 800);
+        return;
+      }
+      // Ease-out curve: fast start, slows toward 72%
+      const t = elapsed / 8;
+      const eased = 1 - Math.pow(1 - t, 3);
+      setLoadingProgress(eased * 72);
+    }, 50);
+    progressTimer.current = phase1;
+    return () => {
+      clearInterval(phase1);
+      if (progressTimer.current) clearInterval(progressTimer.current);
+    };
   }, [step]);
 
   const handleUrlSubmit = async () => {
@@ -327,7 +343,7 @@ export default function FreeAuditLanding() {
               {Math.round(loadingProgress)}% — {loadingProgress < 25 ? 'Checking site speed...' : loadingProgress < 50 ? 'Analyzing SEO signals...' : loadingProgress < 75 ? 'Scanning for revenue leaks...' : loadingProgress < 100 ? 'Writing your report...' : 'Done — loading your results'}
             </p>
             <div style={{ width: '100%', height: '8px', borderRadius: '4px', background: 'rgba(26,23,20,0.08)' }}>
-              <div style={{ width: `${Math.min(loadingProgress, 100)}%`, height: '100%', borderRadius: '4px', background: '#C8522A', transition: 'width 0.1s ease-out' }} />
+              <div style={{ width: `${Math.min(loadingProgress, 100)}%`, height: '100%', borderRadius: '4px', background: '#C8522A', transition: 'width 600ms ease-out' }} />
             </div>
           </div>
         )}
