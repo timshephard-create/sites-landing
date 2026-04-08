@@ -218,7 +218,7 @@ export default function FreeAuditLanding() {
             {/* Pain points below fold */}
             <div style={{ marginTop: '3rem', borderTop: '1px solid #e8e4df', paddingTop: '2rem' }}>
               {[
-                'Slow load times cost you patients before they ever call.',
+                'Slow load times cost you customers before they ever call.',
                 'Most DFW business websites fail basic speed and SEO checks.',
                 'Your competitors may already know this about your site.',
               ].map((line, i) => (
