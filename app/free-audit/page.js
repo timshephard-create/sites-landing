@@ -212,11 +212,12 @@ export default function FreeAuditLanding() {
         {/* STEP: URL INPUT */}
         {step === 'url' && (
           <div>
+            <p style={{ fontSize: '0.75rem', fontWeight: 500, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#9A9490', marginBottom: '0.5rem' }}>Step 1: Enter your website URL</p>
             <input
               ref={urlInputRef}
               value={url}
               onChange={e => setUrl(e.target.value)}
-              placeholder="Enter your website URL"
+              placeholder="yourwebsite.com"
               onKeyDown={e => e.key === 'Enter' && handleUrlSubmit()}
               style={{ width: '100%', padding: '0.95rem 1rem', border: '1px solid #ddd', borderRadius: '2px', fontSize: '16px', fontFamily: 'Georgia, serif', background: '#fff', color: '#1A1714', minHeight: '52px', boxSizing: 'border-box', marginBottom: '0.75rem' }}
             />
@@ -224,11 +225,14 @@ export default function FreeAuditLanding() {
               onClick={handleUrlSubmit}
               style={{ width: '100%', background: '#C8522A', color: '#fff', border: 'none', padding: '0.95rem 2rem', borderRadius: '2px', fontSize: '1rem', cursor: 'pointer', fontFamily: 'Georgia, serif', minHeight: '52px' }}
             >
-              Check My Site Free →
+              Show Me My Score →
             </button>
             {error && <p style={{ color: '#993C1D', fontSize: '0.85rem', marginTop: '0.5rem' }}>{error}</p>}
             <p style={{ fontSize: '0.82rem', color: '#9A9490', marginTop: '0.75rem', textAlign: 'center' }}>
-              No sales call. No obligation. Results in under a minute.
+              Free. No sales call. See your score in under 60 seconds.
+            </p>
+            <p style={{ fontSize: '0.78rem', color: '#9A9490', marginTop: '0.25rem', textAlign: 'center' }}>
+              Join 200+ DFW businesses who've checked their site.
             </p>
 
             {/* Pain points below fold */}
