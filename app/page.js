@@ -5,7 +5,8 @@ import SocialProofBlock from './components/SocialProofBlock';
 export default function Home() {
   const [url, setUrl] = useState('');
   const [email, setEmail] = useState('');
-  const [step, setStep] = useState('idle'); // idle, url, email, loading, results
+  const [step, setStep] = useState('business_type'); // business_type, idle, scoring, scored, email, loading, results
+  const [businessType, setBusinessType] = useState('');
   const [audit, setAudit] = useState(null);
   const [error, setError] = useState('');
   const [pagesCrawled, setPagesCrawled] = useState([]);
@@ -270,9 +271,15 @@ export default function Home() {
         <h1 className="hero-headline" style={{ fontFamily: 'Georgia, serif', fontSize: 'clamp(2.8rem, 6vw, 5.5rem)', lineHeight: 1.1, fontWeight: 700, maxWidth: '18ch', marginBottom: '1rem' }}>
           Find out what your website is costing you. Free. In 60 seconds.
         </h1>
-        <p className="hero-subtext" style={{ fontSize: '1.15rem', color: '#4A4540', maxWidth: '46ch', lineHeight: 1.75, marginBottom: '1.5rem', fontWeight: 300 }}>
-          Get an honest 5-point score card built for DFW small businesses. No fluff, no sales pitch — just the truth about your site.
-        </p>
+        {step === 'business_type' ? (
+          <p className="hero-subtext" style={{ fontSize: '1.15rem', color: '#4A4540', maxWidth: '46ch', lineHeight: 1.75, marginBottom: '1.5rem', fontWeight: 300 }}>
+            Let's see exactly what's broken. First — what type of business do you run?
+          </p>
+        ) : (
+          <p className="hero-subtext" style={{ fontSize: '1.15rem', color: '#4A4540', maxWidth: '46ch', lineHeight: 1.75, marginBottom: '1.5rem', fontWeight: 300 }}>
+            Get an honest 5-point score card built for DFW small businesses. No fluff, no sales pitch — just the truth about your site.
+          </p>
+        )}
         <style>{`
           .hero-input-row { display: flex; gap: 0.75rem; }
           .hero-url-input { flex: 1; padding: 0.9rem 1rem; border: 1px solid #ddd; border-radius: 2px; font-size: 0.95rem; font-family: Georgia, serif; background: #fff; color: #1A1714; min-height: 52px; box-sizing: border-box; }
@@ -289,9 +296,52 @@ export default function Home() {
           }
         `}</style>
 
+        {/* STEP 0: BUSINESS TYPE SELECTION */}
+        {step === 'business_type' && (
+          <div style={{ maxWidth: '480px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+              {[
+                { emoji: '\uD83E\uDDD6', label: 'Medspa' },
+                { emoji: '\uD83E\uDD37', label: 'Dental' },
+                { emoji: '\u2744\uFE0F', label: 'HVAC' },
+                { emoji: '\uD83C\uDFEA', label: 'Other Local Business' },
+              ].map(({ emoji, label }) => (
+                <button
+                  key={label}
+                  onClick={() => {
+                    setBusinessType(label);
+                    if (typeof gtag !== 'undefined') gtag('event', 'business_type_selected', { business_type: label });
+                    if (typeof fbq !== 'undefined') fbq('trackCustom', 'BusinessTypeSelected', { business_type: label });
+                    setTimeout(() => setStep('idle'), 300);
+                  }}
+                  style={{
+                    background: businessType === label ? '#C8522A' : '#fff',
+                    color: businessType === label ? '#fff' : '#1A1714',
+                    border: businessType === label ? '2px solid #C8522A' : '2px solid #e8e4df',
+                    borderRadius: '4px',
+                    padding: '1rem',
+                    minHeight: '64px',
+                    fontSize: '1rem',
+                    fontFamily: 'Georgia, serif',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '0.5rem',
+                    transition: 'all 0.15s ease',
+                  }}
+                >
+                  <span style={{ fontSize: '1.3rem' }}>{emoji}</span> {label}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
         <div style={{ maxWidth: '700px' }}>
           {step === 'idle' && (
             <div style={{ maxWidth: '480px', marginBottom: '1.5rem' }}>
+              <p style={{ fontSize: '0.75rem', fontWeight: 500, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#9A9490', marginBottom: '0.5rem' }}>Step 2: Where is your {businessType || 'business'} website?</p>
               <div className="hero-input-row">
                 <input
                   value={url}
