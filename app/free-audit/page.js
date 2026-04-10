@@ -4,7 +4,8 @@ import { useState, useEffect, useRef } from 'react';
 export default function FreeAuditLanding() {
   const [url, setUrl] = useState('');
   const [email, setEmail] = useState('');
-  const [step, setStep] = useState('url');
+  const [step, setStep] = useState('business_type');
+  const [businessType, setBusinessType] = useState('');
   const [audit, setAudit] = useState(null);
   const [error, setError] = useState('');
   const [pagesCrawled, setPagesCrawled] = useState([]);
@@ -17,10 +18,10 @@ export default function FreeAuditLanding() {
   const turnstileWidgetId = useRef(null);
   const urlInputRef = useRef(null);
 
-  // Autofocus URL input on mount
+  // Autofocus URL input when entering URL step
   useEffect(() => {
-    if (urlInputRef.current) urlInputRef.current.focus();
-  }, []);
+    if (step === 'url' && urlInputRef.current) urlInputRef.current.focus();
+  }, [step]);
 
   // Turnstile widget lifecycle
   useEffect(() => {
@@ -197,7 +198,55 @@ export default function FreeAuditLanding() {
 
       <div style={{ maxWidth: '540px', margin: '0 auto', padding: '3rem 1.5rem 4rem' }}>
 
-        {/* HERO — always visible */}
+        {/* STEP 0: BUSINESS TYPE SELECTION */}
+        {step === 'business_type' && (
+          <div>
+            <h1 style={{ fontFamily: 'Georgia, serif', fontSize: 'clamp(1.75rem, 5.5vw, 2.5rem)', lineHeight: 1.15, fontWeight: 700, marginBottom: '1rem' }}>
+              Your competitors are stealing your customers — your site is helping them.
+            </h1>
+            <p style={{ fontSize: '1.05rem', color: '#4A4540', lineHeight: 1.7, fontWeight: 300, marginBottom: '2rem' }}>
+              Let's see exactly what's broken. First — what type of business do you run?
+            </p>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+              {[
+                { emoji: '\uD83E\uDDD6', label: 'Medspa' },
+                { emoji: '\uD83E\uDD37', label: 'Dental' },
+                { emoji: '\u2744\uFE0F', label: 'HVAC' },
+                { emoji: '\uD83C\uDFEA', label: 'Other Local Business' },
+              ].map(({ emoji, label }) => (
+                <button
+                  key={label}
+                  onClick={() => {
+                    setBusinessType(label);
+                    if (typeof gtag !== 'undefined') gtag('event', 'business_type_selected', { business_type: label });
+                    if (typeof fbq !== 'undefined') fbq('trackCustom', 'BusinessTypeSelected', { business_type: label });
+                    setTimeout(() => setStep('url'), 300);
+                  }}
+                  style={{
+                    background: businessType === label ? '#C8522A' : '#fff',
+                    color: businessType === label ? '#fff' : '#1A1714',
+                    border: businessType === label ? '2px solid #C8522A' : '2px solid #e8e4df',
+                    borderRadius: '4px',
+                    padding: '1rem',
+                    minHeight: '64px',
+                    fontSize: '1rem',
+                    fontFamily: 'Georgia, serif',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '0.5rem',
+                    transition: 'all 0.15s ease',
+                  }}
+                >
+                  <span style={{ fontSize: '1.3rem' }}>{emoji}</span> {label}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* HERO — visible during URL input and scoring */}
         {(step === 'url' || step === 'scoring') && (
           <div style={{ marginBottom: '2.5rem' }}>
             <h1 style={{ fontFamily: 'Georgia, serif', fontSize: 'clamp(1.75rem, 5.5vw, 2.5rem)', lineHeight: 1.15, fontWeight: 700, marginBottom: '1rem' }}>
@@ -209,10 +258,10 @@ export default function FreeAuditLanding() {
           </div>
         )}
 
-        {/* STEP: URL INPUT */}
+        {/* STEP 1: URL INPUT */}
         {step === 'url' && (
           <div>
-            <p style={{ fontSize: '0.75rem', fontWeight: 500, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#9A9490', marginBottom: '0.5rem' }}>Step 1: Enter your website URL</p>
+            <p style={{ fontSize: '0.75rem', fontWeight: 500, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#9A9490', marginBottom: '0.5rem' }}>Step 2: Where is your {businessType || 'business'} website?</p>
             <input
               ref={urlInputRef}
               value={url}
