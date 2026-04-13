@@ -271,7 +271,7 @@ export default function Home() {
           Find out what your website is costing you. Free. In 60 seconds.
         </h1>
         <p className="hero-subtext" style={{ fontSize: '1.15rem', color: '#4A4540', maxWidth: '46ch', lineHeight: 1.75, marginBottom: '1.5rem', fontWeight: 300 }}>
-          {step === 'idle' ? "Here's what we found for a DFW medspa last week:" : 'Get an honest 5-point score card built for DFW small businesses. No fluff, no sales pitch — just the truth about your site.'}
+          {step === 'idle' ? "Here's what a free speed check and audit looks like:" : 'Get an honest 5-point score card built for DFW small businesses. No fluff, no sales pitch — just the truth about your site.'}
         </p>
         <style>{`
           .hero-input-row { display: flex; gap: 0.75rem; }
@@ -294,13 +294,13 @@ export default function Home() {
           <div style={{ maxWidth: '700px', background: '#fff', borderRadius: '6px', boxShadow: '0 2px 16px rgba(26,23,20,0.08)', padding: '1.5rem', marginBottom: '1.5rem', position: 'relative', border: '1px solid #e8e4df' }}>
             <span style={{ position: 'absolute', top: '1rem', right: '1rem', fontSize: '10px', fontWeight: 500, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#999' }}>SAMPLE</span>
             <p style={{ fontSize: '0.7rem', fontWeight: 600, letterSpacing: '0.12em', textTransform: 'uppercase', color: '#C8522A', textAlign: 'center', marginBottom: '0.5rem' }}>FREE WEBSITE AUDIT</p>
-            <p style={{ fontSize: '0.85rem', color: '#C8522A', textAlign: 'center', marginBottom: '1rem', textDecoration: 'underline', textUnderlineOffset: '2px' }}>glowyskindfw.com</p>
+
             <div style={{ textAlign: 'center', marginBottom: '1rem' }}>
               <span style={{ fontFamily: 'Georgia, serif', fontSize: '2.5rem', fontWeight: 700, color: '#993C1D' }}>58</span>
               <span style={{ fontSize: '1rem', color: '#9A9490', marginLeft: '0.25rem' }}>/100 · D</span>
             </div>
             <p style={{ fontSize: '0.88rem', color: '#4A4540', lineHeight: 1.7, fontStyle: 'italic', borderLeft: '3px solid #C8522A', paddingLeft: '1rem', marginBottom: '1.25rem' }}>
-              Glowy Skin's booking flow and homepage load slowly on mobile, likely costing new patient appointments daily. Three competitors in the Las Colinas area are outperforming this site on every measurable signal.
+              This medspa's booking flow and homepage load slowly on mobile, likely costing new patient appointments daily. Three local competitors are outperforming this site on every measurable signal.
             </p>
             <p style={{ fontFamily: 'Georgia, serif', fontSize: '1.05rem', fontWeight: 700, marginBottom: '0.75rem' }}>What we found</p>
             {[
