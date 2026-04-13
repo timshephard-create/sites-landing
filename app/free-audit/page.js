@@ -189,6 +189,31 @@ export default function FreeAuditLanding() {
     return { bg: '#EAF3DE', color: '#3B6D11' };
   };
 
+  const getUrgencyStats = (issues) => {
+    if (!issues?.length) return [];
+    const text = issues.map(i => `${i.title} ${i.description}`).join(' ').toLowerCase();
+    const stats = [];
+    if (text.includes('ssl') || text.includes('https') || text.includes('secure')) {
+      stats.push('Sites without SSL lose 15\u201320% of visitors due to \u201cNot Secure\u201d browser warnings.');
+    }
+    if (text.includes('mobile') || text.includes('responsive')) {
+      stats.push('53% of web traffic is mobile. A site that doesn\'t work on phones loses more than half its audience.');
+    }
+    if (text.includes('speed') || text.includes('slow') || text.includes('load') || text.includes('performance')) {
+      stats.push('A 1-second delay in page load time reduces conversions by 7%.');
+    }
+    if (text.includes('contact') || text.includes('phone') || text.includes('booking') || text.includes('call')) {
+      stats.push('Visitors who can\'t find a phone number or booking link within 5 seconds leave and don\'t come back.');
+    }
+    if (text.includes('email') || text.includes('capture') || text.includes('newsletter') || text.includes('list')) {
+      stats.push('Businesses without email capture lose 97% of first-time visitors permanently.');
+    }
+    if (text.includes('seo') || text.includes('google') || text.includes('search') || text.includes('keyword')) {
+      stats.push('76% of people who search for a local business on their phone visit within a day \u2014 if they can find you.');
+    }
+    return stats.slice(0, 3);
+  };
+
   return (
     <main style={{ fontFamily: "'Georgia', serif", background: '#F7F3EE', minHeight: '100vh', color: '#1A1714' }}>
       <style>{`
@@ -425,21 +450,96 @@ export default function FreeAuditLanding() {
               );
             })}
 
-            {/* $147 Upsell */}
-            <div style={{ background: '#1A1714', borderRadius: '4px', padding: '2rem', marginTop: '2rem', textAlign: 'center' }}>
-              <p style={{ fontFamily: 'Georgia, serif', fontSize: '1.2rem', color: '#fff', marginBottom: '0.5rem' }}>
-                Want the full fix? Get your priority action plan.
-              </p>
-              <p style={{ fontSize: '0.88rem', color: 'rgba(255,255,255,0.5)', marginBottom: '1.5rem', fontWeight: 300 }}>
-                7-section deep-dive with specific fixes, priority order, and a custom mockup of your homepage — delivered to your inbox in minutes.
-              </p>
-              <button
-                onClick={handleCheckout}
-                style={{ width: '100%', background: '#C8522A', color: '#fff', border: 'none', padding: '1rem 1.8rem', borderRadius: '2px', fontSize: '1rem', cursor: 'pointer', fontFamily: 'Georgia, serif' }}
-              >
-                Get the Full Report — $147 →
+            {/* HONEST URGENCY BOX */}
+            {(() => {
+              const stats = getUrgencyStats(audit.issues);
+              if (!stats.length) return null;
+              return (
+                <div style={{ background: '#FAECE7', border: '1px solid #E8C4B4', borderRadius: '4px', padding: '1.5rem', marginTop: '1.5rem' }}>
+                  <p style={{ fontFamily: 'Georgia, serif', fontSize: '1rem', fontWeight: 700, color: '#993C1D', marginBottom: '1rem' }}>What these issues are costing you:</p>
+                  <ul style={{ margin: 0, padding: 0, listStyle: 'none' }}>
+                    {stats.map((stat, i) => (
+                      <li key={i} style={{ display: 'flex', gap: '0.75rem', alignItems: 'flex-start', marginBottom: i < stats.length - 1 ? '0.75rem' : 0 }}>
+                        <span style={{ color: '#993C1D', fontSize: '0.9rem', flexShrink: 0, marginTop: '2px' }}>&rarr;</span>
+                        <span style={{ fontSize: '0.88rem', color: '#6B2E18', lineHeight: 1.6, fontWeight: 300 }}>{stat}</span>
+                      </li>
+                    ))}
+                  </ul>
+                  <button onClick={handleCheckout} style={{ display: 'block', width: '100%', background: '#C8522A', color: '#fff', border: 'none', padding: '0.85rem 1.5rem', borderRadius: '2px', fontSize: '0.9rem', cursor: 'pointer', fontFamily: 'Georgia, serif', marginTop: '1.25rem' }}>
+                    Get My Full Audit Report
+                  </button>
+                </div>
+              );
+            })()}
+
+            {/* SAMPLE REPORT TEASER */}
+            <div style={{ marginTop: '1.5rem', background: '#fff', border: '1px solid #e8e4df', borderRadius: '4px', padding: '1.5rem' }}>
+              <p style={{ fontFamily: 'Georgia, serif', fontSize: '1rem', marginBottom: '0.25rem' }}>Your full personalized report is ready.</p>
+              <p style={{ fontSize: '0.82rem', color: '#9A9490', marginBottom: '1.25rem', fontWeight: 300 }}>Here's what's inside — with specific fixes, priority order, and a custom mockup of your homepage.</p>
+              <div style={{ position: 'relative', overflow: 'hidden', borderRadius: '2px', border: '1px solid #e8e4df' }}>
+                {[
+                  { heading: 'Performance & Page Speed', lines: ['Your homepage loads in 6.2s on mobile — above the 3s threshold where 53% of visitors abandon.', 'Uncompressed images account for 4.1MB of your total 4.8MB page weight.', 'Fix: Compress all images to WebP, defer non-critical JS, enable browser caching.'] },
+                  { heading: 'Mobile Experience', lines: ['Navigation menu breaks at 375px width — tap targets are 18px, below the 44px minimum.', 'Text requires horizontal scrolling on iPhone SE. Two CTAs are completely hidden below the fold.', 'Fix: Rebuild header with mobile-first breakpoints, consolidate CTAs to single action.'] },
+                  { heading: 'Local SEO & Google Visibility', lines: ['No structured data markup found. Google cannot display your hours, reviews, or location in search.', 'Title tag is generic ("Home") — missing city name, service type, and differentiator.', 'Fix: Add LocalBusiness schema, rewrite title tags, submit updated sitemap.'] },
+                  { heading: 'Trust & Credibility Signals', lines: ['No customer reviews, testimonials, or social proof above the fold.', 'No trust badges, certifications, or credentials visible on key landing pages.', 'Fix: Add 3 testimonials with photos, display years in business, add relevant credentials.'] },
+                ].map((section, i) => (
+                  <div key={i} style={{ padding: '1rem 1.25rem', borderBottom: i < 3 ? '1px solid #e8e4df' : 'none', position: 'relative' }}>
+                    <p style={{ fontSize: '0.82rem', fontWeight: 600, color: '#1A1714', marginBottom: '0.4rem', letterSpacing: '0.02em' }}>{section.heading}</p>
+                    <div style={{ filter: 'blur(4px)', userSelect: 'none', pointerEvents: 'none' }}>
+                      {section.lines.map((line, j) => (
+                        <p key={j} style={{ fontSize: '0.78rem', color: '#4A4540', lineHeight: 1.6, margin: j < section.lines.length - 1 ? '0 0 0.3rem' : 0, fontWeight: 300 }}>{line}</p>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+                <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: '55%', background: 'linear-gradient(to bottom, transparent, rgba(255,255,255,0.97))', pointerEvents: 'none' }} />
+              </div>
+              <button onClick={handleCheckout} style={{ display: 'block', width: '100%', background: '#C8522A', color: '#fff', border: 'none', padding: '1rem 1.8rem', borderRadius: '2px', fontSize: '1rem', cursor: 'pointer', fontFamily: 'Georgia, serif', marginTop: '1.25rem' }}>
+                Get My Full Audit Report
               </button>
-              {error && <p style={{ color: '#FAECE7', fontSize: '0.85rem', marginTop: '0.5rem' }}>{error}</p>}
+            </div>
+
+            {/* FREE VS PAID COMPARISON TABLE */}
+            <div style={{ marginTop: '1.5rem', border: '1px solid #e8e4df', borderRadius: '4px', overflow: 'hidden', background: '#fff' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', borderBottom: '1px solid #e8e4df' }}>
+                <div style={{ padding: '0.75rem 1rem', background: '#F7F3EE', borderRight: '1px solid #e8e4df' }}>
+                  <p style={{ margin: 0, fontSize: '0.75rem', fontWeight: 700, color: '#4A4540', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Free Audit</p>
+                </div>
+                <div style={{ padding: '0.75rem 1rem', background: '#1A1714' }}>
+                  <p style={{ margin: 0, fontSize: '0.75rem', fontWeight: 700, color: '#C8522A', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Full Report — $147</p>
+                </div>
+              </div>
+              {[
+                ['Homepage + up to 4 pages crawled', 'Up to 9 pages + sitemap crawl'],
+                ['4–5 issues identified', '7 full sections analyzed'],
+                ['Issue descriptions + impact ratings', 'Specific findings from your actual pages'],
+                ['Generic industry mockup', 'Custom AI mockup of your homepage'],
+                ['On screen + email', 'Full report delivered to your inbox'],
+              ].map(([free, paid], i, arr) => (
+                <div key={i} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', borderBottom: i < arr.length - 1 ? '1px solid #e8e4df' : 'none' }}>
+                  <div style={{ padding: '0.6rem 1rem', borderRight: '1px solid #e8e4df', background: '#FAFAF9' }}>
+                    <p style={{ margin: 0, fontSize: '0.78rem', color: '#6B6560', fontWeight: 300, lineHeight: 1.4 }}>{free}</p>
+                  </div>
+                  <div style={{ padding: '0.6rem 1rem', background: '#fff' }}>
+                    <p style={{ margin: 0, fontSize: '0.78rem', color: '#1A1714', fontWeight: 400, lineHeight: 1.4 }}>{paid}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* MAIN CTA BLOCK */}
+            <div style={{ background: '#1A1714', borderRadius: '4px', padding: '2rem', marginTop: '1.5rem', textAlign: 'center' }}>
+              <p style={{ fontFamily: 'Georgia, serif', fontSize: '1.3rem', color: '#fff', marginBottom: '0.5rem' }}>Want the full picture?</p>
+              <p style={{ fontSize: '0.88rem', color: 'rgba(255,255,255,0.5)', marginBottom: '0.5rem', fontWeight: 300 }}>7-section deep-dive with specific fixes, priority order, and a custom mockup of your homepage — delivered to your inbox in minutes.</p>
+              <p style={{ fontSize: '0.88rem', color: 'rgba(255,255,255,0.7)', marginBottom: '1.5rem' }}>Everything in the free audit is fixable. The full report shows you exactly how.</p>
+              <button onClick={handleCheckout} style={{ display: 'block', width: '100%', background: '#C8522A', color: '#fff', border: 'none', padding: '1rem 1.8rem', borderRadius: '2px', fontSize: '1rem', cursor: 'pointer', fontFamily: 'Georgia, serif', marginBottom: '0.75rem' }}>
+                Get My Full Audit Report — $147
+              </button>
+              <p style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.25)', marginBottom: '1.25rem' }}>Delivered to {email} within 2 minutes</p>
+              <p style={{ fontSize: '0.78rem', color: 'rgba(255,255,255,0.3)', margin: 0 }}>
+                Not ready to buy?&nbsp;
+                <a href="https://calendly.com/tim-shephard/free-15-min-website-call" target="_blank" rel="noreferrer" style={{ color: 'rgba(255,255,255,0.4)', textDecoration: 'underline' }}>Book a free 15-min call instead</a>
+              </p>
             </div>
           </div>
         )}
