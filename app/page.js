@@ -5,8 +5,7 @@ import SocialProofBlock from './components/SocialProofBlock';
 export default function Home() {
   const [url, setUrl] = useState('');
   const [email, setEmail] = useState('');
-  const [step, setStep] = useState('business_type'); // business_type, idle, scoring, scored, email, loading, results
-  const [businessType, setBusinessType] = useState('');
+  const [step, setStep] = useState('idle'); // idle, scoring, scored, email, loading, results
   const [audit, setAudit] = useState(null);
   const [error, setError] = useState('');
   const [pagesCrawled, setPagesCrawled] = useState([]);
@@ -271,15 +270,9 @@ export default function Home() {
         <h1 className="hero-headline" style={{ fontFamily: 'Georgia, serif', fontSize: 'clamp(2.8rem, 6vw, 5.5rem)', lineHeight: 1.1, fontWeight: 700, maxWidth: '18ch', marginBottom: '1rem' }}>
           Find out what your website is costing you. Free. In 60 seconds.
         </h1>
-        {step === 'business_type' ? (
-          <p className="hero-subtext" style={{ fontSize: '1.15rem', color: '#4A4540', maxWidth: '46ch', lineHeight: 1.75, marginBottom: '1.5rem', fontWeight: 300 }}>
-            Let's see exactly what's broken. First — what type of business do you run?
-          </p>
-        ) : (
-          <p className="hero-subtext" style={{ fontSize: '1.15rem', color: '#4A4540', maxWidth: '46ch', lineHeight: 1.75, marginBottom: '1.5rem', fontWeight: 300 }}>
-            Get an honest 5-point score card built for DFW small businesses. No fluff, no sales pitch — just the truth about your site.
-          </p>
-        )}
+        <p className="hero-subtext" style={{ fontSize: '1.15rem', color: '#4A4540', maxWidth: '46ch', lineHeight: 1.75, marginBottom: '1.5rem', fontWeight: 300 }}>
+          {step === 'idle' ? "Here's what we found for a DFW medspa last week:" : 'Get an honest 5-point score card built for DFW small businesses. No fluff, no sales pitch — just the truth about your site.'}
+        </p>
         <style>{`
           .hero-input-row { display: flex; gap: 0.75rem; }
           .hero-url-input { flex: 1; padding: 0.9rem 1rem; border: 1px solid #ddd; border-radius: 2px; font-size: 0.95rem; font-family: Georgia, serif; background: #fff; color: #1A1714; min-height: 52px; box-sizing: border-box; }
@@ -296,52 +289,47 @@ export default function Home() {
           }
         `}</style>
 
-        {/* STEP 0: BUSINESS TYPE SELECTION */}
-        {step === 'business_type' && (
-          <div style={{ maxWidth: '480px' }}>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
-              {[
-                { emoji: '\uD83E\uDDD6', label: 'Medspa' },
-                { emoji: '\uD83E\uDD37', label: 'Dental' },
-                { emoji: '\u2744\uFE0F', label: 'HVAC' },
-                { emoji: '\uD83C\uDFEA', label: 'Other Local Business' },
-              ].map(({ emoji, label }) => (
-                <button
-                  key={label}
-                  onClick={() => {
-                    setBusinessType(label);
-                    if (typeof gtag !== 'undefined') gtag('event', 'business_type_selected', { business_type: label });
-                    if (typeof fbq !== 'undefined') fbq('trackCustom', 'BusinessTypeSelected', { business_type: label });
-                    setTimeout(() => setStep('idle'), 300);
-                  }}
-                  style={{
-                    background: businessType === label ? '#C8522A' : '#fff',
-                    color: businessType === label ? '#fff' : '#1A1714',
-                    border: businessType === label ? '2px solid #C8522A' : '2px solid #e8e4df',
-                    borderRadius: '4px',
-                    padding: '1rem',
-                    minHeight: '64px',
-                    fontSize: '1rem',
-                    fontFamily: 'Georgia, serif',
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: '0.5rem',
-                    transition: 'all 0.15s ease',
-                  }}
-                >
-                  <span style={{ fontSize: '1.3rem' }}>{emoji}</span> {label}
-                </button>
-              ))}
+        {/* SAMPLE AUDIT CARD — visible in idle step */}
+        {step === 'idle' && (
+          <div style={{ maxWidth: '700px', background: '#fff', borderRadius: '6px', boxShadow: '0 2px 16px rgba(26,23,20,0.08)', padding: '1.5rem', marginBottom: '1.5rem', position: 'relative', border: '1px solid #e8e4df' }}>
+            <span style={{ position: 'absolute', top: '1rem', right: '1rem', fontSize: '10px', fontWeight: 500, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#999' }}>SAMPLE</span>
+            <p style={{ fontSize: '0.7rem', fontWeight: 600, letterSpacing: '0.12em', textTransform: 'uppercase', color: '#C8522A', textAlign: 'center', marginBottom: '0.5rem' }}>FREE WEBSITE AUDIT</p>
+            <p style={{ fontSize: '0.85rem', color: '#C8522A', textAlign: 'center', marginBottom: '1rem', textDecoration: 'underline', textUnderlineOffset: '2px' }}>glowyskindfw.com</p>
+            <div style={{ textAlign: 'center', marginBottom: '1rem' }}>
+              <span style={{ fontFamily: 'Georgia, serif', fontSize: '2.5rem', fontWeight: 700, color: '#993C1D' }}>58</span>
+              <span style={{ fontSize: '1rem', color: '#9A9490', marginLeft: '0.25rem' }}>/100 · D</span>
             </div>
+            <p style={{ fontSize: '0.88rem', color: '#4A4540', lineHeight: 1.7, fontStyle: 'italic', borderLeft: '3px solid #C8522A', paddingLeft: '1rem', marginBottom: '1.25rem' }}>
+              Glowy Skin's booking flow and homepage load slowly on mobile, likely costing new patient appointments daily. Three competitors in the Las Colinas area are outperforming this site on every measurable signal.
+            </p>
+            <p style={{ fontFamily: 'Georgia, serif', fontSize: '1.05rem', fontWeight: 700, marginBottom: '0.75rem' }}>What we found</p>
+            {[
+              { title: 'No click-to-call button on mobile', impact: 'high impact', desc: "Mobile visitors can't call directly from the homepage — they have to find the number manually." },
+              { title: 'Page loads in 9.4s on mobile', impact: 'high impact', desc: 'Industry benchmark for medspas is under 2s. Every second of delay costs an estimated 7% of visitors.' },
+              { title: 'Missing reviews schema markup', impact: 'medium impact', desc: "Star ratings don't appear in Google search results — competitors with schema markup look more credible instantly." },
+            ].map((issue, i) => (
+              <div key={i} style={{ background: '#F7F3EE', borderRadius: '4px', padding: '1rem', marginBottom: i < 2 ? '0.5rem' : 0 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.35rem' }}>
+                  <p style={{ fontWeight: 600, fontSize: '0.88rem', margin: 0, color: '#1A1714' }}>{issue.title}</p>
+                  <span style={{ fontSize: '0.7rem', fontWeight: 600, letterSpacing: '0.04em', textTransform: 'uppercase', color: '#C8522A', whiteSpace: 'nowrap', marginLeft: '0.75rem' }}>{issue.impact}</span>
+                </div>
+                <p style={{ fontSize: '0.82rem', color: '#4A4540', lineHeight: 1.6, margin: 0, fontWeight: 300 }}>{issue.desc}</p>
+              </div>
+            ))}
           </div>
+        )}
+
+        {/* TRANSITION LINE */}
+        {step === 'idle' && (
+          <p style={{ fontFamily: 'Georgia, serif', fontSize: '1.25rem', color: '#1A1714', textAlign: 'center', margin: '1.5rem 0', maxWidth: '700px' }}>
+            Want to see what we find on yours?
+          </p>
         )}
 
         <div style={{ maxWidth: '700px' }}>
           {step === 'idle' && (
             <div style={{ maxWidth: '480px', marginBottom: '1.5rem' }}>
-              <p style={{ fontSize: '0.75rem', fontWeight: 500, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#9A9490', marginBottom: '0.5rem' }}>Step 2: Where is your {businessType || 'business'} website?</p>
+              <p style={{ fontSize: '0.75rem', fontWeight: 500, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#9A9490', marginBottom: '0.5rem' }}>Step 1: Enter your website URL</p>
               <div className="hero-input-row">
                 <input
                   value={url}
