@@ -265,18 +265,20 @@ export default function Home() {
       </nav>
 
       {/* HERO */}
-      <section className="hero-section" style={{ display: 'flex', flexDirection: 'column', padding: '7rem 2rem 3rem', maxWidth: '1100px', margin: '0 auto' }}>
-        <p style={{ fontSize: '0.78rem', fontWeight: 500, letterSpacing: '0.12em', textTransform: 'uppercase', color: '#C8522A', marginBottom: '1.5rem' }}>Free website score card — DFW businesses</p>
-        <h1 className="hero-headline" style={{ fontFamily: 'Georgia, serif', fontSize: 'clamp(2.8rem, 6vw, 5.5rem)', lineHeight: 1.1, fontWeight: 700, maxWidth: '18ch', marginBottom: '1rem' }}>
+      <section className="hero-section" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '7rem 2rem 3rem', maxWidth: '1100px', margin: '0 auto' }}>
+        <p style={{ fontSize: '0.78rem', fontWeight: 500, letterSpacing: '0.12em', textTransform: 'uppercase', color: '#C8522A', marginBottom: '1.5rem', textAlign: 'center' }}>Free website score card — DFW businesses</p>
+        <h1 className="hero-headline" style={{ fontFamily: 'Georgia, serif', fontSize: 'clamp(2.8rem, 6vw, 5.5rem)', lineHeight: 1.1, fontWeight: 700, maxWidth: '18ch', marginBottom: '2rem', textAlign: 'center' }}>
           Find out what your website is costing you. Free. In 60 seconds.
         </h1>
-        <p className="hero-subtext" style={{ fontSize: '1.15rem', color: '#4A4540', maxWidth: '46ch', lineHeight: 1.75, marginBottom: '1.5rem', fontWeight: 300 }}>
-          {step === 'idle' ? "Here's what a free speed check and audit looks like:" : 'Get an honest 5-point score card built for DFW small businesses. No fluff, no sales pitch — just the truth about your site.'}
-        </p>
+        {step !== 'idle' && (
+          <p className="hero-subtext" style={{ fontSize: '1.15rem', color: '#4A4540', maxWidth: '46ch', lineHeight: 1.75, marginBottom: '1.5rem', fontWeight: 300, textAlign: 'center' }}>
+            Get an honest 5-point score card built for DFW small businesses. No fluff, no sales pitch — just the truth about your site.
+          </p>
+        )}
         <style>{`
-          .hero-input-row { display: flex; gap: 0.75rem; }
-          .hero-url-input { flex: 1; padding: 0.9rem 1rem; border: 1px solid #ddd; border-radius: 2px; font-size: 0.95rem; font-family: Georgia, serif; background: #fff; color: #1A1714; min-height: 52px; box-sizing: border-box; }
-          .hero-audit-btn { background: #C8522A; color: #fff; border: none; padding: 0.9rem 2rem; border-radius: 2px; font-size: 0.95rem; cursor: pointer; font-family: Georgia, serif; white-space: nowrap; min-height: 52px; }
+          .hero-input-row { display: flex; gap: 0.75rem; width: 100%; }
+          .hero-url-input { flex: 1; padding: 1.15rem 1.25rem; border: 1px solid #ddd; border-radius: 2px; font-size: 1.1rem; font-family: Georgia, serif; background: #fff; color: #1A1714; min-height: 64px; box-sizing: border-box; }
+          .hero-audit-btn { background: #C8522A; color: #fff; border: none; padding: 1.15rem 2.5rem; border-radius: 2px; font-size: 1.1rem; cursor: pointer; font-family: Georgia, serif; white-space: nowrap; min-height: 64px; font-weight: 500; }
           .email-input-row { display: flex; gap: 0.75rem; flex-wrap: wrap; }
           .email-input { flex: 1; padding: 0.9rem 1rem; border: 1px solid #ddd; border-radius: 2px; font-size: 0.95rem; font-family: Georgia, serif; min-width: 180px; background: #fff; color: #1A1714; min-height: 52px; box-sizing: border-box; }
           .email-btn { background: #C8522A; color: #fff; border: none; padding: 0.9rem 1.75rem; border-radius: 2px; font-size: 0.95rem; cursor: pointer; font-family: Georgia, serif; white-space: nowrap; min-height: 52px; }
@@ -286,12 +288,42 @@ export default function Home() {
             .hero-section { padding-top: 5.5rem !important; padding-bottom: 2rem !important; }
             .hero-headline { font-size: 2.2rem !important; }
             .hero-subtext { font-size: 0.95rem !important; line-height: 1.5 !important; }
+            .hero-url-input { font-size: 16px !important; min-height: 56px !important; padding: 1rem !important; }
+            .hero-audit-btn { font-size: 1rem !important; min-height: 56px !important; padding: 1rem 1.5rem !important; }
           }
         `}</style>
 
-        {/* SAMPLE AUDIT CARD — visible in idle step */}
+        {/* IDLE STEP: URL input form (now primary action — centered, larger) */}
         {step === 'idle' && (
-          <div style={{ maxWidth: '700px', background: '#fff', borderRadius: '6px', boxShadow: '0 2px 16px rgba(26,23,20,0.08)', padding: '1.5rem', marginBottom: '1.5rem', position: 'relative', border: '1px solid #e8e4df' }}>
+          <div style={{ maxWidth: '560px', width: '100%', marginBottom: '3.5rem' }}>
+            <p style={{ fontSize: '0.85rem', fontWeight: 500, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#9A9490', marginBottom: '0.65rem', textAlign: 'center' }}>Step 1: Enter your website URL</p>
+            <div className="hero-input-row">
+              <input
+                value={url}
+                onChange={e => setUrl(e.target.value)}
+                placeholder="https://yourbusiness.com"
+                onKeyDown={e => e.key === 'Enter' && handleUrlSubmit()}
+                className="hero-url-input"
+              />
+              <button onClick={handleUrlSubmit} className="hero-audit-btn">
+                Audit my site
+              </button>
+            </div>
+            {error && <p style={{ color: '#993C1D', fontSize: '0.85rem', marginTop: '0.5rem', textAlign: 'center' }}>{error}</p>}
+            <p style={{ fontSize: '0.82rem', color: '#9A9490', marginTop: '0.85rem', textAlign: 'center' }}>Free · No account needed · Results in 60 seconds</p>
+          </div>
+        )}
+
+        {/* IDLE STEP: Lead-in to sample card */}
+        {step === 'idle' && (
+          <p className="hero-subtext" style={{ fontSize: '1.05rem', color: '#4A4540', maxWidth: '46ch', lineHeight: 1.7, marginBottom: '1.25rem', fontWeight: 300, textAlign: 'center' }}>
+            Here's what a free speed check and audit looks like:
+          </p>
+        )}
+
+        {/* IDLE STEP: Sample audit card (centered) */}
+        {step === 'idle' && (
+          <div style={{ maxWidth: '700px', width: '100%', background: '#fff', borderRadius: '6px', boxShadow: '0 2px 16px rgba(26,23,20,0.08)', padding: '1.5rem', marginBottom: '1.5rem', position: 'relative', border: '1px solid #e8e4df' }}>
             <span style={{ position: 'absolute', top: '1rem', right: '1rem', fontSize: '10px', fontWeight: 500, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#999' }}>SAMPLE</span>
             <p style={{ fontSize: '0.7rem', fontWeight: 600, letterSpacing: '0.12em', textTransform: 'uppercase', color: '#C8522A', textAlign: 'center', marginBottom: '0.5rem' }}>FREE WEBSITE AUDIT</p>
 
@@ -319,33 +351,8 @@ export default function Home() {
           </div>
         )}
 
-        {/* TRANSITION LINE */}
-        {step === 'idle' && (
-          <p style={{ fontFamily: 'Georgia, serif', fontSize: '1.25rem', color: '#1A1714', textAlign: 'center', margin: '1.5rem 0', maxWidth: '700px' }}>
-            Want to see what we find on yours?
-          </p>
-        )}
+        <div style={{ maxWidth: '700px', width: '100%' }}>
 
-        <div style={{ maxWidth: '700px' }}>
-          {step === 'idle' && (
-            <div style={{ maxWidth: '480px', marginBottom: '1.5rem' }}>
-              <p style={{ fontSize: '0.75rem', fontWeight: 500, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#9A9490', marginBottom: '0.5rem' }}>Step 1: Enter your website URL</p>
-              <div className="hero-input-row">
-                <input
-                  value={url}
-                  onChange={e => setUrl(e.target.value)}
-                  placeholder="https://yourbusiness.com"
-                  onKeyDown={e => e.key === 'Enter' && handleUrlSubmit()}
-                  className="hero-url-input"
-                />
-                <button onClick={handleUrlSubmit} className="hero-audit-btn">
-                  Audit my site
-                </button>
-              </div>
-              {error && step === 'idle' && <p style={{ color: '#993C1D', fontSize: '0.85rem', marginTop: '0.5rem' }}>{error}</p>}
-              <p style={{ fontSize: '0.82rem', color: '#9A9490', marginTop: '0.75rem' }}>Free · No account needed · Results in 60 seconds</p>
-            </div>
-          )}
 
           {step === 'scoring' && (
             <div style={{ textAlign: 'center', padding: '3rem' }}>
